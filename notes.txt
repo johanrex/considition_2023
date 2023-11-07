@@ -1,0 +1,39 @@
+
+
+Restart from previous best. 
+
+Hosting
+    Azure Docker 
+        Starta bash interaktivt som proof of concept. 
+        Separat ip per docker compose
+
+        Hur deploya filer till den?
+
+        Central databas?
+
+        används log analytics för docker?
+
+1. Använda genetisk algorithm för att ta reda på booleans och diskreta värden. 
+2. Använd en bättre teknik för flyttal
+
+
+Storing score
+    map, payload, score
+
+
+-----------------------------------------------------------------------------------
+
+There are several optimization algorithms designed to handle situations where the fitness function is unknown and expensive to evaluate. Here are a few:
+
+* Bayesian Optimization: This is a sequential design strategy for global optimization of black-box functions that doesn't require derivatives. It builds a probabilistic model of the function and uses it to select the most promising points to evaluate.
+* Genetic Algorithms: These are inspired by the process of natural selection and use methods such as mutation and crossover to generate new sample points. While they can handle expensive fitness functions, they may require many function evaluations to find a good solution.
+* Particle Swarm Optimization (PSO): This is a population-based stochastic optimization technique inspired by social behavior of bird flocking or fish schooling. It's simple and has been applied in many areas.
+* Simulated Annealing: This is a probabilistic technique for approximating the global optimum of a given function. It uses a random search instead of a gradient search, so it doesn't require the function to be differentiable.
+* CMA-ES (Covariance Matrix Adaptation Evolution Strategy): This is an evolutionary algorithm for difficult non-linear non-convex optimization problems in continuous domain. It's considered state-of-the-art in evolutionary computation and can adaptively tune the search strategy.
+
+Remember, the choice of algorithm often depends on the specific characteristics of your problem.
+
+
+-----------
+
+Bayesian Optimization: This algorithm can handle mixed types of parameters by using appropriate kernels for the Gaussian Process (GP) model. For example, the Matérn kernel can be used for continuous parameters, and the Hamming kernel can be used for categorical parameters.
