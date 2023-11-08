@@ -1,10 +1,10 @@
 import os
-import time
-import itertools
+import sys
+
 import json
 from database import Database
 from starterkit.scoring import calculateScore
-from starterkit.api import getGeneralData, getMapData, submit
+from starterkit.api import getGeneralData, getMapData
 
 from starterkit.data_keys import (
     MapNames as MN,
@@ -12,8 +12,6 @@ from starterkit.data_keys import (
     ScoringKeys as SK,
 )
 from dotenv import load_dotenv
-
-# GENETIC ALGORITHM
 import genetic
 
 
@@ -86,12 +84,6 @@ def fitness_callback(genome: list[int]):
             json.dumps(solution),
         )
 
-        # TODO make this smarter.
-        # Submit in separate process
-        # if time.time() - start_time > 1:
-        #     scored_solution = submit(map_name, solution, api_key)
-        #     print("Submitted to api:", scored_solution)
-
     return score_val
 
 
@@ -103,9 +95,11 @@ general_data = getGeneralData()
 # write_response_to_file(f"tmp/general_data.json", general_data)
 
 
-start_time = time.time()
+if len(sys.argv) > 1:
+    map_name = sys.argv[1]
+else:
+    map_name = MN.vasteras
 
-map_name = MN.vasteras
 print(f"Using map name: {map_name}.")
 
 map_data = getMapData(map_name, api_key)
