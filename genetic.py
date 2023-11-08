@@ -1,18 +1,18 @@
 import random
 
 
-def fitness(individual):
+def fitness(genome):
     return 0  # Placeholder fitness function
 
 
-# TODO it's possible but unlikely to create an individual with only zeroes. It can not be scored. Perhaps handle this by assigning a max negative score?
-def create_individual(length, min_val, max_val):
-    return [random.randint(min_val, max_val) for _ in range(length)]
+# TODO it's possible but unlikely to create a genome with only zeroes. It can not be scored. Perhaps handle this by assigning a max negative score?
+def create_random_genome(length, range_min, range_max):
+    return [random.randint(range_min, range_max) for _ in range(length)]
 
 
-def mutate(individual, min_val, max_val):
-    index = random.randint(0, len(individual) - 1)
-    individual[index] = random.randint(min_val, max_val)
+def mutate(genome, min_val, max_val):
+    index = random.randint(0, len(genome) - 1)
+    genome[index] = random.randint(min_val, max_val)
 
 
 def crossover(parent1, parent2):
@@ -25,23 +25,23 @@ def crossover(parent1, parent2):
 def genetic_algorithm(
     population_size,
     num_generations,
-    individual_length,
-    min_val,
-    max_val,
-    start_individual=None,
+    genome_length,
+    range_min,
+    range_max,
+    start_genome=None,
     fitness_callback=fitness,
 ):
     fitness = fitness_callback
 
     population = [
-        create_individual(individual_length, min_val, max_val)
+        create_random_genome(genome_length, range_min, range_max)
         for _ in range(population_size)
     ]
 
-    # if we have a starting individual, replace one of the random starts with this one.
+    # if we have a starting genome, replace one of the random starts with this one.
     # slightly hacky but should be fine
-    if start_individual is not None:
-        population[0] = start_individual
+    if start_genome is not None:
+        population[0] = start_genome
 
     for _ in range(num_generations):
         population.sort(key=fitness, reverse=True)
@@ -54,10 +54,10 @@ def genetic_algorithm(
 
         # Mutation
         for child in children:
-            mutate(child, min_val, max_val)
+            mutate(child, range_min, range_max)
 
-        # Replace worst individuals with new children
+        # Replace worst genome with new children
         population[-2:] = children
 
-    # Return the best individual from the final population
+    # Return the best genome from the final population
     return max(population, key=fitness)

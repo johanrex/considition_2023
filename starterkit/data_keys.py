@@ -1,17 +1,26 @@
 from dataclasses import dataclass
 
 
+# @dataclass
+# class MapNames:
+#     stockholm = "stockholm"
+#     goteborg = "goteborg"
+#     malmo = "malmo"
+#     uppsala = "uppsala"
+#     vasteras = "vasteras"
+#     orebro = "orebro"
+#     london = "london"
+#     linkoping = "linkoping"
+#     berlin = "berlin"
+
+
+# training maps
 @dataclass
 class MapNames:
-    stockholm = "stockholm"
     goteborg = "goteborg"
-    malmo = "malmo"
     uppsala = "uppsala"
     vasteras = "vasteras"
-    orebro = "orebro"
-    london = "london"
     linkoping = "linkoping"
-    berlin = "berlin"
 
 
 @dataclass

@@ -2,7 +2,7 @@ import os
 import time
 import itertools
 import json
-import pickle
+from database import Database
 from starterkit.scoring import calculateScore
 from starterkit.api import getGeneralData, getMapData, submit
 
@@ -17,23 +17,8 @@ from dotenv import load_dotenv
 import genetic
 
 
-def get_next_solution():
-    [print(x) for x in list(itertools.combinations_with_replacement(range(6), 3))]
-
-
-def list_all_maps():
-    # let's hardcode them for now
-    return [
-        MN.stockholm,
-        MN.goteborg,
-        MN.malmo,
-        MN.uppsala,
-        MN.vasteras,
-        MN.orebro,
-        MN.london,
-        MN.linkoping,
-        MN.berlin,
-    ]
+# def get_next_solution():
+#     [print(x) for x in list(itertools.combinations_with_replacement(range(6), 3))]
 
 
 def write_response_to_file(file_name, reponse):
@@ -63,30 +48,49 @@ def solution_from_int_list(individual: list[int], location_names: list[str]):
     return solution
 
 
-def fitness_callback(individual: list[int]):
+def int_list_from_solution(
+    solution: dict[str, dict[str, int]], location_names: list[str]
+):
+    genome = []
+
+    for location_name in location_names:
+        if location_name in solution[LK.locations]:
+            genome.append(solution[LK.locations][location_name][LK.f9100Count])
+            genome.append(solution[LK.locations][location_name][LK.f3100Count])
+        else:
+            genome.append(0)
+            genome.append(0)
+
+    return genome
+
+
+def fitness_callback(genome: list[int]):
     global map_data
     global general_data
     global location_names
-    global max_score
+    global best_score
 
-    solution = solution_from_int_list(individual, location_names)
-
+    solution = solution_from_int_list(genome, location_names)
     score_obj = calculateScore(map_name, solution, map_data, general_data)
     score_val = score_obj[SK.gameScore][SK.total]
 
-    if score_val > max_score:
-        max_score = score_val
-        print(f"New max score: {max_score}")
-        print("Genome:", individual)
+    if score_val > best_score:
+        best_score = score_val
+        print(f"New best score: {best_score}")
+        print("Genome:", genome)
 
-        checkpoint = {"genome": individual, "score_val": score_val}
-        pickle.dump(checkpoint, open(checkpoint_filename, "wb"))
+        db.insert(
+            map_name,
+            score_val,
+            algorithm,
+            json.dumps(solution),
+        )
 
         # TODO make this smarter.
-        # Write to mqtt queue? Submit to api in separate process?
-        if time.time() - start_time > 1:
-            scored_solution = submit(map_name, solution, api_key)
-            print("Submitted to api:", scored_solution)
+        # Submit in separate process
+        # if time.time() - start_time > 1:
+        #     scored_solution = submit(map_name, solution, api_key)
+        #     print("Submitted to api:", scored_solution)
 
     return score_val
 
@@ -108,27 +112,33 @@ map_data = getMapData(map_name, api_key)
 
 location_names = [loc["locationName"] for loc in map_data["locations"].values()]
 
-
+best_genome = None
 genome_length = len(location_names * 2)
-min_val = 0
-max_val = 5
+range_min = 0
+range_max = 5
 
+algorithm = "genetic"
 
-checkpoint_filename = f"tmp/genetic_{map_data[SK.mapName]}.pkl"
-if os.path.exists(checkpoint_filename):
-    checkpoint = pickle.load(open(checkpoint_filename, "rb"))
-    max_score = checkpoint["score_val"]
-    print(f"Loaded checkpoint with score: {max_score}")
+db = Database()
+
+best_genome = None
+best_score, best_solution = db.get_best_solution(map_name)
+if best_score is None and best_solution is None:
+    best_score = float("-inf")
 else:
-    max_score = float("-inf")
+    best_solution = json.loads(best_solution)
+    best_genome = int_list_from_solution(best_solution, location_names)
+    print(f"Loaded genome with score: {best_score}")
+    print("Loaded genome:", best_genome)
+
 
 best_genome = genetic.genetic_algorithm(
     population_size=10,
-    num_generations=100_000,
-    individual_length=genome_length,
-    min_val=min_val,
-    max_val=max_val,
-    start_individual=None,
+    num_generations=1_000_000,
+    genome_length=genome_length,
+    range_min=range_min,
+    range_max=range_max,
+    start_genome=best_genome,
     fitness_callback=fitness_callback,
 )
 
