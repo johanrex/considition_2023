@@ -28,6 +28,9 @@ map_names = [member for member in list(dir(MN)) if not member.startswith("__")]
 while True:
     logger.info("Checking for new solutions")
     for map_name in map_names:
+        # Do some housekeeping
+        db.keep_only_best_solution(map_name)
+
         # Get unsubmitted solutions
         total_score, unsubmitted_solution = db.get_best_unsubmitted_solution(map_name)
 
@@ -44,7 +47,7 @@ while True:
             time.sleep(5)
 
     # TODO do this better. Perhaps with tenacity
-    time.sleep(5)
+    time.sleep(20)
 
 # db = Database()
 

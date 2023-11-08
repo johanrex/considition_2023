@@ -11,7 +11,8 @@ from data_keys import (
 
 def calculateScore(mapName, solution, mapEntity, generalData):
     scoredSolution = {
-        SK.gameId: str(uuid.uuid4()),
+        # SK.gameId: str(uuid.uuid4()),
+        SK.gameId: 0,
         SK.mapName: mapName,
         LK.locations: {},
         SK.gameScore: {SK.co2Savings: 0.0, SK.totalFootfall: 0.0},
@@ -38,9 +39,11 @@ def calculateScore(mapName, solution, mapEntity, generalData):
                 LK.f3100Count: f3_count,
                 LK.f9100Count: f9_count,
                 LK.salesVolume: loc[LK.salesVolume] * generalData[GK.refillSalesFactor],
-                LK.salesCapacity: f3_count * generalData[GK.f3100Data][GK.refillCapacityPerWeek]
+                LK.salesCapacity: f3_count
+                * generalData[GK.f3100Data][GK.refillCapacityPerWeek]
                 + f9_count * generalData[GK.f9100Data][GK.refillCapacityPerWeek],
-                LK.leasingCost: f3_count * generalData[GK.f3100Data][GK.leasingCostPerWeek]
+                LK.leasingCost: f3_count
+                * generalData[GK.f3100Data][GK.leasingCostPerWeek]
                 + f9_count * generalData[GK.f9100Data][GK.leasingCostPerWeek],
             }
 
@@ -59,9 +62,13 @@ def calculateScore(mapName, solution, mapEntity, generalData):
             }
 
     if not scoredSolution[LK.locations]:
-        raise SystemExit(f"Error: No valid locations with refill stations were placed for map: {mapName}")
+        raise SystemExit(
+            f"Error: No valid locations with refill stations were placed for map: {mapName}"
+        )
 
-    scoredSolution[LK.locations] = distributeSales(scoredSolution[LK.locations], locationListNoRefillStation, generalData)
+    scoredSolution[LK.locations] = distributeSales(
+        scoredSolution[LK.locations], locationListNoRefillStation, generalData
+    )
 
     for key in scoredSolution[LK.locations]:
         loc = scoredSolution[LK.locations][key]
@@ -73,31 +80,56 @@ def calculateScore(mapName, solution, mapEntity, generalData):
         loc[LK.revenue] = sales * generalData[GK.refillUnitData][GK.profitPerUnit]
         loc[SK.earnings] = loc[LK.revenue] - loc[LK.leasingCost]
 
-        scoredSolution[SK.totalF3100Count] += scoredSolution[LK.locations][key][LK.f3100Count]
-        scoredSolution[SK.totalF9100Count] += scoredSolution[LK.locations][key][LK.f9100Count]
+        scoredSolution[SK.totalF3100Count] += scoredSolution[LK.locations][key][
+            LK.f3100Count
+        ]
+        scoredSolution[SK.totalF9100Count] += scoredSolution[LK.locations][key][
+            LK.f9100Count
+        ]
 
         scoredSolution[SK.gameScore][SK.co2Savings] += (
-            sales * (generalData[GK.classicUnitData][GK.co2PerUnitInGrams] - generalData[GK.refillUnitData][GK.co2PerUnitInGrams]) / 1000
+            sales
+            * (
+                generalData[GK.classicUnitData][GK.co2PerUnitInGrams]
+                - generalData[GK.refillUnitData][GK.co2PerUnitInGrams]
+            )
+            / 1000
         )
 
-        scoredSolution[SK.totalRevenue] += sales * generalData[GK.refillUnitData][GK.profitPerUnit]
+        scoredSolution[SK.totalRevenue] += (
+            sales * generalData[GK.refillUnitData][GK.profitPerUnit]
+        )
 
-        scoredSolution[SK.totalLeasingCost] += scoredSolution[LK.locations][key][LK.leasingCost]
+        scoredSolution[SK.totalLeasingCost] += scoredSolution[LK.locations][key][
+            LK.leasingCost
+        ]
 
-        scoredSolution[SK.gameScore][SK.totalFootfall] += scoredSolution[LK.locations][key][LK.footfall]
+        scoredSolution[SK.gameScore][SK.totalFootfall] += scoredSolution[LK.locations][
+            key
+        ][LK.footfall]
 
     scoredSolution[SK.totalRevenue] = round(scoredSolution[SK.totalRevenue], 0)
     scoredSolution[SK.gameScore][SK.co2Savings] = round(
         scoredSolution[SK.gameScore][SK.co2Savings]
-        - scoredSolution[SK.totalF3100Count] * generalData[GK.f3100Data][GK.staticCo2] / 1000
-        - scoredSolution[SK.totalF9100Count] * generalData[GK.f9100Data][GK.staticCo2] / 1000,
+        - scoredSolution[SK.totalF3100Count]
+        * generalData[GK.f3100Data][GK.staticCo2]
+        / 1000
+        - scoredSolution[SK.totalF9100Count]
+        * generalData[GK.f9100Data][GK.staticCo2]
+        / 1000,
         0,
     )
 
-    scoredSolution[SK.gameScore][SK.earnings] = scoredSolution[SK.totalRevenue] - scoredSolution[SK.totalLeasingCost]
+    scoredSolution[SK.gameScore][SK.earnings] = (
+        scoredSolution[SK.totalRevenue] - scoredSolution[SK.totalLeasingCost]
+    )
 
     scoredSolution[SK.gameScore][SK.total] = round(
-        (scoredSolution[SK.gameScore][SK.co2Savings] * generalData[GK.co2PricePerKiloInSek] + scoredSolution[SK.gameScore][SK.earnings])
+        (
+            scoredSolution[SK.gameScore][SK.co2Savings]
+            * generalData[GK.co2PricePerKiloInSek]
+            + scoredSolution[SK.gameScore][SK.earnings]
+        )
         * (1 + scoredSolution[SK.gameScore][SK.totalFootfall]),
         0,
     )
@@ -112,7 +144,9 @@ def distanceBetweenPoint(lat_1, long_1, lat_2, long_2) -> int:
     Δφ = (lat_2 - lat_1) * math.pi / 180
     Δλ = (long_2 - long_1) * math.pi / 180
 
-    a = math.sin(Δφ / 2) * math.sin(Δφ / 2) + math.cos(φ1) * math.cos(φ2) * math.sin(Δλ / 2) * math.sin(Δλ / 2)
+    a = math.sin(Δφ / 2) * math.sin(Δφ / 2) + math.cos(φ1) * math.cos(φ2) * math.sin(
+        Δλ / 2
+    ) * math.sin(Δλ / 2)
 
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
@@ -142,7 +176,8 @@ def distributeSales(with_, without, generalData):
                 distributeSalesTo[key_temp] = (
                     math.pow(
                         generalData[GK.constantExpDistributionFunction],
-                        generalData[GK.willingnessToTravelInMeters] - distributeSalesTo[key_temp],
+                        generalData[GK.willingnessToTravelInMeters]
+                        - distributeSalesTo[key_temp],
                     )
                     - 1
                 )
@@ -150,7 +185,10 @@ def distributeSales(with_, without, generalData):
 
             for key_temp in distributeSalesTo:
                 with_[key_temp][LK.salesVolume] += (
-                    distributeSalesTo[key_temp] / total * generalData[GK.refillDistributionRate] * loc_without[LK.salesVolume]
+                    distributeSalesTo[key_temp]
+                    / total
+                    * generalData[GK.refillDistributionRate]
+                    * loc_without[LK.salesVolume]
                 )
 
     return with_
