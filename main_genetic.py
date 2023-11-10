@@ -119,7 +119,7 @@ best_score = float("-inf")
 best_genome = None
 
 
-for i in range(20):
+for i in range(10):
     best_score = float("-inf")
     best_genome = None
 

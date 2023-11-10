@@ -6,6 +6,7 @@ import time
 import logging
 from dotenv import load_dotenv
 from starterkit.api import submit
+from starterkit.api import getGeneralData
 
 logger = logging.getLogger("submit_logger")
 logger.setLevel(logging.INFO)
@@ -22,8 +23,15 @@ domain = os.environ["domain"]
 
 db = Database()
 
-# Getting all maps
-map_names = [member for member in list(dir(MN)) if not member.startswith("__")]
+general_data = getGeneralData()
+map_names = general_data["trainingMapNames"]
+
+logger.info("---------------------------------")
+logger.info("Current best solutions:")
+for map_name in map_names:
+    total_score, _ = db.get_best_solution(map_name)
+    logger.info(f"{map_name}:\t{total_score}")
+logger.info("---------------------------------")
 
 while True:
     logger.info("Checking for new solutions")
@@ -48,9 +56,3 @@ while True:
 
     # TODO do this better. Perhaps with tenacity
     time.sleep(20)
-
-# db = Database()
-
-# db.get_best_unsubmitted_solution(map_name)
-
-maps = []

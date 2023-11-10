@@ -14,6 +14,7 @@ from starterkit.data_keys import (
     ScoringKeys as SK,
 )
 from dotenv import load_dotenv
+import utils
 
 
 class SimulatedAnnealing:
@@ -97,13 +98,7 @@ def energy_wrapper(solution):
 def move_wrapper(solution):
     new_solution = copy.deepcopy(solution)
 
-    # fill all the blanks
-    for location_name in location_names:
-        if location_name not in new_solution[LK.locations]:
-            new_solution[LK.locations][location_name] = {
-                LK.f9100Count: 0,
-                LK.f3100Count: 0,
-            }
+    utils.fill_missing_locations_inplace(new_solution, location_names)
 
     # Make the change
     ok = False
@@ -121,12 +116,10 @@ def move_wrapper(solution):
             new_solution[LK.locations][location_name][machine] = val
             ok = True
 
-    # Prune the blanks
-    new_solution[LK.locations] = {
-        k: v
-        for k, v in new_solution[LK.locations].items()
-        if v[LK.f9100Count] > 0 or v[LK.f3100Count] > 0
-    }
+    utils.prune_blanks_inplace(new_solution)
+
+    global nr_of_moves
+    nr_of_moves += 1
 
     return new_solution
 
@@ -139,9 +132,11 @@ def create_simple_solution():
 
     for location_name in location_names:
         solution[LK.locations][location_name] = {
-            LK.f9100Count: 1,
-            LK.f3100Count: 1,
+            LK.f9100Count: random.randint(0, 5),
+            LK.f3100Count: random.randint(0, 5),
         }
+
+    utils.prune_blanks_inplace(solution)
 
     return solution
 
@@ -155,7 +150,7 @@ general_data = getGeneralData()
 if len(sys.argv) > 1:
     map_name = sys.argv[1]
 else:
-    map_name = MN.vasteras
+    map_name = MN.goteborg
 
 print(f"Using map name: {map_name}.")
 
@@ -182,11 +177,13 @@ db = Database()
 initial_solution = create_simple_solution()
 best_score = float("-inf")
 
-
+nr_of_moves = 0
 SimulatedAnnealing.simulated_annealing(
     initial_solution=initial_solution,
-    initial_temperature=10_000_000,
-    cooling_rate=0.99,
+    initial_temperature=100000,
+    cooling_rate=0.995,
     energy_func=energy_wrapper,
     move_func=move_wrapper,
 )
+
+print(f"Number of moves considered: {nr_of_moves}")
