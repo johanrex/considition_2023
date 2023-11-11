@@ -74,9 +74,16 @@ def score_wrapper(map_name, solution, map_data, general_data):
 
 class MapDistance:
     def __init__(self, map_data):
-        location_names = map_data[LK.locations].keys()
-        for location_a in location_names:
-            for location_b in location_names:
+        # initialize distance_matrix
+        self.distance_matrix = {}
+
+        location_names = list(map_data[LK.locations].keys())
+
+        for i in range(len(location_names)):
+            location_a = location_names[i]
+            self.distance_matrix[location_a] = {}
+            for j in range(i, len(location_names)):
+                location_b = location_names[j]
                 if location_a == location_b:
                     d = 0
                 else:
@@ -90,9 +97,21 @@ class MapDistance:
 
                     d = distanceBetweenPoint(lat_a, long_a, lat_b, long_b)
 
-                d.... put in distance matrix
+                self.distance_matrix[location_a][location_b] = d
+                if location_a != location_b:
+                    if location_b not in self.distance_matrix:
+                        self.distance_matrix[location_b] = {}
+                    self.distance_matrix[location_b][location_a] = d
 
-        # distanceBetweenPoint(lat_1, long_1, lat_2, long_2) -> int:
+    # TODO remove not used.
+    def distance(self, localtion_a: str, location_b: str) -> float:
+        return self.distance_matrix[localtion_a][location_b]
 
-    def distance(localtion_a: str, location_b: str) -> float:
-        return 0
+    def locations_within_radius(self, location: str, radius: float) -> frozenset[str]:
+        return frozenset(
+            {
+                location_b
+                for location_b, distance in self.distance_matrix[location].items()
+                if distance <= radius
+            }
+        )

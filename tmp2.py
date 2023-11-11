@@ -1,0 +1,6 @@
+s = set()
+s.add(frozenset({1}))
+s.add(frozenset({1, 3}))
+s.add(frozenset({1, 5, 7}))
+sorted_s = sorted(s, key=len)
+print(sorted_s)

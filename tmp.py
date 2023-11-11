@@ -1,6 +1,7 @@
 import json
 import os
 import copy
+import itertools
 from dotenv import load_dotenv
 from database import Database
 from starterkit.scoring import calculateScore
@@ -10,8 +11,64 @@ from starterkit.data_keys import (
     MapNames as MN,
     LocationKeys as LK,
     ScoringKeys as SK,
+    GeneralKeys as GK,
 )
 import utils
+
+
+def minus_one(location_names: list[str], best_score, best_solution):
+    for location_name in location_names:
+        nr_machines = 2
+        for i in range(nr_machines):
+            new_solution = copy.deepcopy(best_solution)
+
+            if nr_machines == 0 and LK.f9100Count > 0:
+                new_solution[LK.locations][location_name][LK.f9100Count] = -1
+            elif nr_machines == 1 and LK.f3100Count > 0:
+                new_solution[LK.locations][location_name][LK.f3100Count] = -1
+
+            utils.prune_blanks_inplace(solution)
+            new_score = utils.score_wrapper(
+                map_name, new_solution, map_data, general_data
+            )
+
+            if new_score > best_score:
+                best_score = new_score
+                best_solution = new_solution
+
+    return best_score, best_solution
+
+
+def brute_force_locations(
+    starting_score, starting_solution, location_cluster, map_data, general_data
+):
+    best_solution = starting_solution
+    best_score = starting_score
+
+    num_locations = len(location_cluster)
+    iterable = itertools.product(
+        range(range_min, range_max + 1), repeat=num_locations * 2
+    )
+    for tpl in iterable:
+        current_solution = copy.deepcopy(starting_solution)
+        for i, location_name in enumerate(location_cluster):
+            current_solution[LK.locations][location_name] = {
+                LK.f9100Count: tpl[i],
+                LK.f3100Count: tpl[i + 1],
+            }
+
+        utils.prune_blanks_inplace(current_solution)
+        current_score = utils.score_wrapper(
+            map_name, current_solution, map_data, general_data
+        )
+        if current_score > best_score:
+            best_score = current_score
+            best_solution = current_solution
+
+            print(f"New best score: {best_score}.")
+
+    # score = utils.score_wrapper(map_name, solution, map_data, general_data)
+    return best_score, best_solution
 
 
 def create_simple_solution(location_names: list[str]):
@@ -39,16 +96,17 @@ domain = os.environ["domain"]
 
 # json.dump(best_solution, open(f"tmp/solution_{map_name}.json", "w"), indent=4)
 
-range_min = 0
-range_max = 5
-
 general_data = getGeneralData()
 map_names = general_data["trainingMapNames"]
 
+range_min = 0
+range_max = 5
+radius = general_data[GK.willingnessToTravelInMeters]  # 150.0
 
-for map_name in map_names:
-    # map_name = MN.goteborg
-    # if True:
+
+# for map_name in map_names:
+map_name = MN.goteborg
+if True:
     map_data = getMapData(map_name, api_key)
 
     location_names = map_data["locations"].keys()
@@ -67,17 +125,45 @@ for map_name in map_names:
     # ########################################
     # merge solutions into one
     # ########################################
-    merged_solution = {LK.locations: {}}
+    solution = {LK.locations: {}}
     for single_solution in single_location_optimal_solutions:
-        merged_solution[LK.locations].update(single_solution[LK.locations])
+        solution[LK.locations].update(single_solution[LK.locations])
 
-    score = utils.score_wrapper(map_name, merged_solution, map_data, general_data)
-    print(f"Score for {map_name}: {score}.")
+    score = utils.score_wrapper(map_name, solution, map_data, general_data)
+    print(f"Score for {map_name}: {score}. Optimized for individual locations.")
 
     # ########################################
     # Find locations within 150 meters
     # Try combinations within 150 meters
     # ########################################
+    clusters = set()
+    map_distance = utils.MapDistance(map_data)
+    for location_name in location_names:
+        cluster = map_distance.locations_within_radius(location_name, radius)
+        if len(cluster) > 1:
+            # The cluster we get may be a duplicate. Using a set keeps it unique.
+            clusters.add(cluster)
+
+    print(f"Found {len(clusters)} clusters of locations within {radius} meters")
+    for cluster in clusters:
+        print("\t", cluster)
+
+    # ########################################
+    # Brute force combinations within 150 meters
+    # ########################################
+
+    # Start with the small clusters and work towards bigger
+    clusters = sorted(clusters, key=len)
+    for cluster in clusters:
+        print(f"Brute forcing cluster: {cluster}")
+        score, solution = brute_force_locations(
+            score, solution, cluster, map_data, general_data
+        )
+
+    print(f"Score for {map_name}: {score}. Optimized for clusters of close locations.")
+
+    # TODO pruna smart.
+    # minska en och se vad som händer. Öka alla andra med en och se vad som händer. Fortsätt bara om det blir bättre.
 
     pass
 
@@ -107,23 +193,5 @@ while increasing_score
 
 
 ----->  prova alla kombinationer på en location och alla locations inom 150 meter <--- 
-        det finns distance i scoring filen. 
-        for loc1 in locations:
-            for loc2 in locations:
-                if loc1 == loc2:
-                    continue
-                if distance(loc1, loc2) < 150:
-                    for f9100 in range(0, 5):
-                        for f3100 in range(0, 5):
-                            solution = create_simple_solution()
-                            solution[loc1][f9100] = f9100
-                            solution[loc1][f3100] = f3100
-                            calculateScore(solution)
-                            if score > best_score:
-                                best_score = score
-                                best_solution = solution
-                                
-
-
 """
 pass
