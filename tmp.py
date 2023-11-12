@@ -164,27 +164,25 @@ if True:
 ###############################################################################
 
 """
-TODO var hostas api? Azure? Köra min lösning på Azure?
+TODO optimizations
+    var hostas api? Azure? Köra min lösning på Azure?
+    bättre brute force för location cluster. Kanske nån stack för att hålla reda på inre loopen. 
+    mypy?
+    cython?
+    mypyc?
+    skriv om scoring function så den inte gör dict access?
+    c++ scoring?
 
+    locations = []
+    while loc := locations.pop():
+        loc_perm := get_next_permutation(loc):
+        
+    
+    perm_score, perm_solution = get next permutation(location1)
+    push score to stack
 
-scoredSolution[SK.gameScore][SK.earnings] = (
-    scoredSolution[SK.totalRevenue] - scoredSolution[SK.totalLeasingCost]
-)
+        perm_score, perm_solution = get next permutation(location2)
+        push score to stack
 
-"willingnessToTravelInMeters": 150.0,
-
-Teoretiskt max för en location? 
-Prova sedan att sätta antal till 0 för att se om footfall + mindre leasing cost förbättrar score. 
-
-Mindre leasing cost om man avstår från att ha en refillstation där det finns många andra. 
-
-Kanske klustra och räkna på alla locations inom 150 meter. 
-k nearest neighbors
-
-while increasing_score
-    prova sätta ut nya 9100 på var och en av locations och se om man får mer score.
-
-
------>  prova alla kombinationer på en location och alla locations inom 150 meter <--- 
 """
 pass
