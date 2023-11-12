@@ -1,6 +1,7 @@
 import json
 import os
 import copy
+import math
 import itertools
 from dotenv import load_dotenv
 from database import Database
@@ -53,7 +54,6 @@ api_key = os.environ["apiKey"]
 domain = os.environ["domain"]
 
 
-# db = Database()
 # score, best_solution = db.get_best_solution(map_name)
 # best_solution = json.loads(best_solution)
 
@@ -66,9 +66,13 @@ range_min = 0
 range_max = 5
 radius = general_data[GK.willingnessToTravelInMeters]  # 150.0
 
+db = Database()
+algorithm = "custom1"
 
+# put gbg last
+map_names = sorted(map_names, reverse=True)
 # for map_name in map_names:
-map_name = MN.linkoping
+map_name = MN.goteborg
 if True:
     print("Finding solution for:", map_name)
 
@@ -76,57 +80,80 @@ if True:
 
     location_names = map_data["locations"].keys()
 
+    best_solution = {LK.locations: {}}
+    best_score = -math.inf
+
     # ########################################
     # Find optimal solutions for each location
     # ########################################
-    single_location_optimal_solutions = []
     for location_name in location_names:
-        solution = {LK.locations: {}}
         best_score, best_solution = utils.find_optimal_placement_for_location2(
-            location_name, solution, map_data, general_data, range_min, range_max
+            location_name, best_solution, map_data, general_data, range_min, range_max
         )
-
-        single_location_optimal_solutions.append(best_solution)
-
-    # ########################################
-    # merge solutions into one
-    # ########################################
-    solution = {LK.locations: {}}
-    for single_solution in single_location_optimal_solutions:
-        solution[LK.locations].update(single_solution[LK.locations])
-
-    score = utils.score_wrapper(map_name, solution, map_data, general_data)
-    print(f"Score for {map_name}: {score}. Optimized for individual locations.")
+    print(f"Score for {map_name}: {best_score}. Optimized for individual locations.")
 
     # ########################################
     # Find locations within 150 meters
     # Try combinations within 150 meters
     # ########################################
-    clusters = set()
+    location_clusters = set()
     map_distance = utils.MapDistance(map_data)
     for location_name in location_names:
         cluster = map_distance.locations_within_radius(location_name, radius)
         if len(cluster) > 1:
             # The cluster we get may be a duplicate. Using a set keeps it unique.
-            clusters.add(cluster)
+            location_clusters.add(cluster)
 
-    print(f"Found {len(clusters)} clusters of locations within {radius} meters")
-    for cluster in clusters:
-        print("\t", cluster)
+    print(
+        f"Found {len(location_clusters)} clusters of locations within {radius} meters"
+    )
+
+    # ########################################
+    # Keeping only some small clusters due to performance
+    # ########################################
+    cluster_limit = 3  # TODO optimize
+    location_clusters = [
+        cluster for cluster in location_clusters if len(cluster) <= cluster_limit
+    ]
+    print(
+        f"Limiting cluster size to {cluster_limit}. Keeping {len(location_clusters)} clusters."
+    )
 
     # ########################################
     # Brute force combinations within 150 meters
     # ########################################
 
     # Start with the small clusters and work towards bigger
-    clusters = sorted(clusters, key=len)
-    for cluster in clusters:
+    location_clusters = sorted(location_clusters, key=len)
+
+    for cluster in location_clusters:
         print(f"Brute forcing cluster: {cluster}")
-        score, solution = brute_force_location_cluster(
-            score, solution, cluster, map_data, general_data
+        best_score, best_solution = brute_force_location_cluster(
+            best_score, best_solution, cluster, map_data, general_data
         )
 
-    print(f"Score for {map_name}: {score}. Optimized for clusters of close locations.")
+    print(
+        f"Score for {map_name}: {best_score}. Optimized for clusters of close locations."
+    )
+
+    # ########################################
+    # Do a second round of location specific optimization. Might find something new.
+    # ########################################
+    for location_name in location_names:
+        best_score, best_solution = utils.find_optimal_placement_for_location2(
+            location_name, best_solution, map_data, general_data, range_min, range_max
+        )
+    print(f"Score for {map_name}: {best_score}. Optimized for individual locations.")
+
+    # ########################################
+    # Add to database
+    # ########################################
+    db.insert(
+        map_name,
+        best_score,
+        algorithm,
+        json.dumps(best_solution),
+    )
 
     # TODO pruna smart.
     # minska en och se vad som händer. Öka alla andra med en och se vad som händer. Fortsätt bara om det blir bättre.
