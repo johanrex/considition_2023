@@ -16,30 +16,7 @@ from starterkit.data_keys import (
 import utils
 
 
-def minus_one(location_names: list[str], best_score, best_solution):
-    for location_name in location_names:
-        nr_machines = 2
-        for i in range(nr_machines):
-            new_solution = copy.deepcopy(best_solution)
-
-            if nr_machines == 0 and LK.f9100Count > 0:
-                new_solution[LK.locations][location_name][LK.f9100Count] = -1
-            elif nr_machines == 1 and LK.f3100Count > 0:
-                new_solution[LK.locations][location_name][LK.f3100Count] = -1
-
-            utils.prune_blanks_inplace(solution)
-            new_score = utils.score_wrapper(
-                map_name, new_solution, map_data, general_data
-            )
-
-            if new_score > best_score:
-                best_score = new_score
-                best_solution = new_solution
-
-    return best_score, best_solution
-
-
-def brute_force_locations(
+def brute_force_location_cluster(
     starting_score, starting_solution, location_cluster, map_data, general_data
 ):
     best_solution = starting_solution
@@ -71,20 +48,6 @@ def brute_force_locations(
     return best_score, best_solution
 
 
-def create_simple_solution(location_names: list[str]):
-    solution = {LK.locations: {}}
-
-    for location_name in location_names:
-        solution[LK.locations][location_name] = {
-            LK.f9100Count: 1,
-            LK.f3100Count: 0,
-        }
-
-    utils.prune_blanks_inplace(solution)
-
-    return solution
-
-
 load_dotenv()
 api_key = os.environ["apiKey"]
 domain = os.environ["domain"]
@@ -105,8 +68,10 @@ radius = general_data[GK.willingnessToTravelInMeters]  # 150.0
 
 
 # for map_name in map_names:
-map_name = MN.goteborg
+map_name = MN.linkoping
 if True:
+    print("Finding solution for:", map_name)
+
     map_data = getMapData(map_name, api_key)
 
     location_names = map_data["locations"].keys()
@@ -116,11 +81,12 @@ if True:
     # ########################################
     single_location_optimal_solutions = []
     for location_name in location_names:
-        single_location_optimal_solutions.append(
-            utils.find_optimal_placement_for_location(
-                location_name, map_data, general_data, range_min, range_max
-            )
+        solution = {LK.locations: {}}
+        best_score, best_solution = utils.find_optimal_placement_for_location2(
+            location_name, solution, map_data, general_data, range_min, range_max
         )
+
+        single_location_optimal_solutions.append(best_solution)
 
     # ########################################
     # merge solutions into one
@@ -156,7 +122,7 @@ if True:
     clusters = sorted(clusters, key=len)
     for cluster in clusters:
         print(f"Brute forcing cluster: {cluster}")
-        score, solution = brute_force_locations(
+        score, solution = brute_force_location_cluster(
             score, solution, cluster, map_data, general_data
         )
 
