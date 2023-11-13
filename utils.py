@@ -1,12 +1,50 @@
 from starterkit.scoring import calculateScore, distanceBetweenPoint
 import math
-import copy
+import itertools
 from starterkit.data_keys import (
     MapNames as MN,
     LocationKeys as LK,
     ScoringKeys as SK,
     CoordinateKeys as CK,
 )
+
+
+def brute_force_location_cluster(
+    map_name,
+    map_data,
+    starting_score,
+    starting_solution,
+    location_cluster,
+    general_data,
+    range_min,
+    range_max,
+):
+    best_solution = starting_solution
+    best_score = starting_score
+
+    num_locations = len(location_cluster)
+    iterable = itertools.product(
+        range(range_min, range_max + 1), repeat=num_locations * 2
+    )
+    for tpl in iterable:
+        current_solution = copy_solution(starting_solution)
+        for i, location_name in enumerate(location_cluster):
+            current_solution[LK.locations][location_name] = {
+                LK.f9100Count: tpl[i],
+                LK.f3100Count: tpl[i + 1],
+            }
+
+        prune_blanks_inplace(current_solution)
+        current_score = score_wrapper(
+            map_name, current_solution, map_data, general_data
+        )
+        if current_score > best_score:
+            best_score = current_score
+            best_solution = current_solution
+
+            # print(f"New best score: {best_score}.")
+
+    return best_score, best_solution
 
 
 def copy_solution(solution):
@@ -30,38 +68,6 @@ def prune_blanks_inplace(solution):
         for k, v in solution[LK.locations].items()
         if v[LK.f9100Count] > 0 or v[LK.f3100Count] > 0
     }
-
-
-# def find_optimal_placement_for_location(
-#     location_name, map_data, general_data, range_min, range_max
-# ):
-
-#     map_name = map_data[SK.mapName]
-#     best_score = -math.inf
-#     best_solution = None
-
-#     for i in range(range_min, range_max + 1):
-#         for j in range(range_min, range_max + 1):
-#             solution = {LK.locations: {}}
-#             solution[LK.locations][location_name] = {
-#                 LK.f9100Count: i,
-#                 LK.f3100Count: j,
-#             }
-
-#             # can't score zero solution
-#             if i == 0 and j == 0:
-#                 continue
-
-#             score = calculateScore(map_name, solution, map_data, general_data)[
-#                 SK.gameScore
-#             ][SK.total]
-
-
-#             if score > best_score:
-#                 best_score = score
-#                 best_solution = solution
-
-#     return best_score, best_solution
 
 
 def find_optimal_placement_for_location2(

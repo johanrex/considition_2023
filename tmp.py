@@ -17,47 +17,10 @@ from starterkit.data_keys import (
 import utils
 
 
-def brute_force_location_cluster(
-    starting_score, starting_solution, location_cluster, map_data, general_data
-):
-    best_solution = starting_solution
-    best_score = starting_score
-
-    num_locations = len(location_cluster)
-    iterable = itertools.product(
-        range(range_min, range_max + 1), repeat=num_locations * 2
-    )
-    for tpl in iterable:
-        current_solution = utils.copy_solution(starting_solution)
-        for i, location_name in enumerate(location_cluster):
-            current_solution[LK.locations][location_name] = {
-                LK.f9100Count: tpl[i],
-                LK.f3100Count: tpl[i + 1],
-            }
-
-        utils.prune_blanks_inplace(current_solution)
-        current_score = utils.score_wrapper(
-            map_name, current_solution, map_data, general_data
-        )
-        if current_score > best_score:
-            best_score = current_score
-            best_solution = current_solution
-
-            # print(f"New best score: {best_score}.")
-
-    # score = utils.score_wrapper(map_name, solution, map_data, general_data)
-    return best_score, best_solution
-
-
 load_dotenv()
 api_key = os.environ["apiKey"]
 domain = os.environ["domain"]
 
-
-# score, best_solution = db.get_best_solution(map_name)
-# best_solution = json.loads(best_solution)
-
-# json.dump(best_solution, open(f"tmp/solution_{map_name}.json", "w"), indent=4)
 
 general_data = getGeneralData()
 map_names = general_data["trainingMapNames"]
@@ -71,9 +34,9 @@ algorithm = "custom1"
 
 # put gbg last
 map_names = sorted(map_names, reverse=True)
-for map_name in map_names:
-    # map_name = MN.linkoping
-    # if True:
+# for map_name in map_names:
+map_name = MN.linkoping
+if True:
     print("Finding solution for:", map_name)
 
     map_data = getMapData(map_name, api_key)
@@ -128,8 +91,15 @@ for map_name in map_names:
 
     for cluster in location_clusters:
         # print(f"Brute forcing cluster: {cluster}")
-        best_score, best_solution = brute_force_location_cluster(
-            best_score, best_solution, cluster, map_data, general_data
+        best_score, best_solution = utils.brute_force_location_cluster(
+            map_name,
+            map_data,
+            best_score,
+            best_solution,
+            cluster,
+            general_data,
+            range_min,
+            range_max,
         )
 
     print(
@@ -179,6 +149,7 @@ TODO optimizations
     c++ scoring?
 
 TODO competition day
+    Reboot computer for fresh memory
     Make sure it commits to database
     Make sure the submit script is running
     Make sure to switch to the competition maps. 
