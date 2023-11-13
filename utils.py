@@ -9,6 +9,12 @@ from starterkit.data_keys import (
 )
 
 
+def copy_solution(solution):
+    new_solution = {LK.locations: {}}
+    new_solution[LK.locations] = {k: v for k, v in solution[LK.locations].items()}
+    return new_solution
+
+
 def fill_missing_locations_inplace(solution, location_names):
     for location_name in location_names:
         if location_name not in solution[LK.locations]:
@@ -76,7 +82,7 @@ def find_optimal_placement_for_location2(
         best_score_inner = -math.inf
 
         for cnt_3100 in range(range_min, range_max + 1):
-            new_solution = copy.deepcopy(current_solution)
+            new_solution = copy_solution(current_solution)
 
             if cnt_9100 == 0 and cnt_3100 == 0:
                 if location_name in new_solution[LK.locations]:

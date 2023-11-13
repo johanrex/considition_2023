@@ -1,6 +1,7 @@
 import math
 from typing import Dict
 import uuid
+import functools
 from data_keys import (
     LocationKeys as LK,
     CoordinateKeys as CK,
@@ -137,6 +138,7 @@ def calculateScore(mapName, solution, mapEntity, generalData):
     return scoredSolution
 
 
+@functools.cache
 def distanceBetweenPoint(lat_1, long_1, lat_2, long_2) -> int:
     R = 6371e3
     φ1 = lat_1 * math.pi / 180  #  φ, λ in radians

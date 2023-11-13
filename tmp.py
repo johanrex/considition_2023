@@ -28,7 +28,7 @@ def brute_force_location_cluster(
         range(range_min, range_max + 1), repeat=num_locations * 2
     )
     for tpl in iterable:
-        current_solution = copy.deepcopy(starting_solution)
+        current_solution = utils.copy_solution(starting_solution)
         for i, location_name in enumerate(location_cluster):
             current_solution[LK.locations][location_name] = {
                 LK.f9100Count: tpl[i],
@@ -43,7 +43,7 @@ def brute_force_location_cluster(
             best_score = current_score
             best_solution = current_solution
 
-            print(f"New best score: {best_score}.")
+            # print(f"New best score: {best_score}.")
 
     # score = utils.score_wrapper(map_name, solution, map_data, general_data)
     return best_score, best_solution
@@ -71,9 +71,9 @@ algorithm = "custom1"
 
 # put gbg last
 map_names = sorted(map_names, reverse=True)
-# for map_name in map_names:
-map_name = MN.goteborg
-if True:
+for map_name in map_names:
+    # map_name = MN.linkoping
+    # if True:
     print("Finding solution for:", map_name)
 
     map_data = getMapData(map_name, api_key)
@@ -127,7 +127,7 @@ if True:
     location_clusters = sorted(location_clusters, key=len)
 
     for cluster in location_clusters:
-        print(f"Brute forcing cluster: {cluster}")
+        # print(f"Brute forcing cluster: {cluster}")
         best_score, best_solution = brute_force_location_cluster(
             best_score, best_solution, cluster, map_data, general_data
         )
@@ -143,7 +143,9 @@ if True:
         best_score, best_solution = utils.find_optimal_placement_for_location2(
             location_name, best_solution, map_data, general_data, range_min, range_max
         )
-    print(f"Score for {map_name}: {best_score}. Optimized for individual locations.")
+    print(
+        f"Score for {map_name}: {best_score}. Second round of optimizing for individual locations."
+    )
 
     # ########################################
     # Add to database
@@ -171,7 +173,16 @@ TODO optimizations
     cython?
     mypyc?
     skriv om scoring function så den inte gör dict access?
+    multithreading?
+    parallellisera?
+    skriv till db async?
     c++ scoring?
+
+TODO competition day
+    Make sure it commits to database
+    Make sure the submit script is running
+    Make sure to switch to the competition maps. 
+
 
     locations = []
     while loc := locations.pop():
