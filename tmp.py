@@ -1,17 +1,13 @@
 import json
 import os
-import copy
 import math
-import itertools
 from dotenv import load_dotenv
 from database import Database
-from starterkit.scoring import calculateScore
 from starterkit.api import getGeneralData, getMapData
 
 from starterkit.data_keys import (
     MapNames as MN,
     LocationKeys as LK,
-    ScoringKeys as SK,
     GeneralKeys as GK,
 )
 import utils
@@ -26,8 +22,8 @@ general_data = getGeneralData()
 map_names = general_data["trainingMapNames"]
 
 range_min = 0
-range_max = 5
-radius = general_data[GK.willingnessToTravelInMeters]  # 150.0
+range_max = 2
+radius = general_data[GK.willingnessToTravelInMeters]  # 200.0
 
 db = Database()
 algorithm = "custom1"
@@ -37,7 +33,9 @@ map_names = sorted(map_names, reverse=True)
 # for map_name in map_names:
 map_name = MN.linkoping
 if True:
+    print("#############################################")
     print("Finding solution for:", map_name)
+    print("#############################################")
 
     map_data = getMapData(map_name, api_key)
 
@@ -56,8 +54,8 @@ if True:
     print(f"Score for {map_name}: {best_score}. Optimized for individual locations.")
 
     # ########################################
-    # Find locations within 150 meters
-    # Try combinations within 150 meters
+    # Find locations within 200 meters
+    # Try combinations within radius
     # ########################################
     location_clusters = set()
     map_distance = utils.MapDistance(map_data)
@@ -67,9 +65,7 @@ if True:
             # The cluster we get may be a duplicate. Using a set keeps it unique.
             location_clusters.add(cluster)
 
-    print(
-        f"Found {len(location_clusters)} clusters of locations within {radius} meters"
-    )
+    print(f"{len(location_clusters)} clusters found. Locations within {radius} meters.")
 
     # ########################################
     # Keeping only some small clusters due to performance
@@ -79,11 +75,11 @@ if True:
         cluster for cluster in location_clusters if len(cluster) <= cluster_limit
     ]
     print(
-        f"Limiting cluster size to {cluster_limit}. Keeping {len(location_clusters)} clusters."
+        f"{len(location_clusters)} clusters will be considered. Limiting cluster size to {cluster_limit}."
     )
 
     # ########################################
-    # Brute force combinations within 150 meters
+    # Brute force combinations within radius
     # ########################################
 
     # Start with the small clusters and work towards bigger
@@ -91,7 +87,7 @@ if True:
 
     for cluster in location_clusters:
         # print(f"Brute forcing cluster: {cluster}")
-        best_score, best_solution = utils.brute_force_location_cluster(
+        best_score, best_solution = utils.brute_force_locations_cluster(
             map_name,
             map_data,
             best_score,
@@ -127,8 +123,8 @@ if True:
         json.dumps(best_solution),
     )
 
-    # TODO pruna smart.
-    # minska en och se vad som händer. Öka alla andra med en och se vad som händer. Fortsätt bara om det blir bättre.
+    print("Done.")
+    print("")
 
     pass
 

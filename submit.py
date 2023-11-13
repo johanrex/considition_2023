@@ -1,6 +1,6 @@
-from starterkit.data_keys import MapNames as MN
 from database import Database
 import os
+import math
 import json
 import time
 import logging
@@ -42,7 +42,7 @@ while True:
         # Get unsubmitted solutions
         total_score, unsubmitted_solution = db.get_best_unsubmitted_solution(map_name)
 
-        if unsubmitted_solution is not None:
+        if unsubmitted_solution is not None and total_score > -math.inf:
             logger.info(
                 f"Submitting solution for: {map_name} with score: {total_score}"
             )

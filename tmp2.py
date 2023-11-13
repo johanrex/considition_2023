@@ -2,10 +2,7 @@ from database import Database
 import json
 import copy
 from starterkit.data_keys import (
-    MapNames as MN,
     LocationKeys as LK,
-    ScoringKeys as SK,
-    CoordinateKeys as CK,
 )
 import timeit
 

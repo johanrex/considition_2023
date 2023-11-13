@@ -1,9 +1,6 @@
 import requests
 import os
 from dotenv import load_dotenv
-from data_keys import (
-    ScoringKeys as SK,
-)
 
 load_dotenv()
 domain = os.environ["domain"]
@@ -45,7 +42,11 @@ def getGame(id_):
         return resp.json()
 
 
-def submit(mapName: str, solution, apiKey):
+def submit(
+    mapName: str,
+    solution,
+    apiKey,
+):
     # try:
     resp = requests.post(
         f"{domain}/api/Game/submitSolution?mapName={mapName}",

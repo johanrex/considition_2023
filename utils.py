@@ -2,14 +2,60 @@ from starterkit.scoring import calculateScore, distanceBetweenPoint
 import math
 import itertools
 from starterkit.data_keys import (
-    MapNames as MN,
     LocationKeys as LK,
     ScoringKeys as SK,
     CoordinateKeys as CK,
 )
 
 
-def brute_force_location_cluster(
+def score_chunk(
+    map_name,
+    map_data,
+    starting_solution,
+    location_name,
+    general_data,
+    range_min,
+    range_max,
+):
+    # TODO remove assert once tested
+    assert starting_solution[LK.locations][location_name][LK.f3100Count] == 0
+
+    best_solution = None
+    best_score = -math.inf
+
+    for i in range(range_min, range_max + 1):
+        current_solution = copy_solution(starting_solution)
+        current_solution[LK.locations][location_name][LK.f3100Count] = i
+        current_score = score_wrapper(
+            map_name, current_solution, map_data, general_data
+        )
+
+        if current_score > best_score:
+            best_score = current_score
+            best_solution = current_solution
+
+    return best_score, best_solution
+
+
+def brute_force_locations_cluster2(
+    map_name,
+    map_data,
+    starting_score,
+    starting_solution,
+    location_cluster,
+    general_data,
+    range_min,
+    range_max,
+):
+    # check all within checkpoint before deciding to continue or break
+    # make function that checks best score for all solutions within a checkpoint?
+
+    # start at 0 9100 and get best chunk, then increase to max
+
+    pass
+
+
+def brute_force_locations_cluster(
     map_name,
     map_data,
     starting_score,
@@ -41,8 +87,6 @@ def brute_force_location_cluster(
         if current_score > best_score:
             best_score = current_score
             best_solution = current_solution
-
-            # print(f"New best score: {best_score}.")
 
     return best_score, best_solution
 
