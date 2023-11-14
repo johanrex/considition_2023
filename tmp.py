@@ -48,9 +48,27 @@ if True:
     # Find optimal solutions for each location
     # ########################################
     for location_name in location_names:
+        # ########################################
+        # TODO verify that score_solution works and then remove the old one.
+        # Perhaps profile nr of calls to calculateScore
+        # ########################################
+
+        score_x, solution_x = utils.score_location(
+            map_name,
+            map_data,
+            best_solution,
+            location_name,
+            general_data,
+            range_min,
+            range_max,
+        )
+
         best_score, best_solution = utils.find_optimal_placement_for_location2(
             location_name, best_solution, map_data, general_data, range_min, range_max
         )
+
+        assert best_score == score_x
+
     print(f"Score for {map_name}: {best_score}. Optimized for individual locations.")
 
     # ########################################

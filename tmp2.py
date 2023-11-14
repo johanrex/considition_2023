@@ -1,37 +1,37 @@
+import os
 from database import Database
 import json
+import time
 import copy
 from starterkit.data_keys import (
     LocationKeys as LK,
 )
 import timeit
-
-
-db = Database()
-
-score, solution = db.get_best_solution("goteborg")
-solution = json.loads(solution)
-
-
-def copy_solution_deepcopy(solution):
-    return copy.deepcopy(solution)
-
-
-def copy_solution_dict_comprehension(solution):
-    new_solution = {LK.locations: {}}
-    new_solution[LK.locations] = {k: v for k, v in solution[LK.locations].items()}
-    return new_solution
-
-
-n = 10_000
-
-time_dict_comprehension = timeit.timeit(
-    "copy_solution_dict_comprehension(solution)", globals=globals(), number=n
+from starterkit.api import getGeneralData, getMapData
+from starterkit.data_keys import (
+    MapNames as MN,
+    LocationKeys as LK,
+    GeneralKeys as GK,
 )
+from dotenv import load_dotenv
 
-time_deepcopy = timeit.timeit(
-    "copy_solution_deepcopy(solution)", globals=globals(), number=n
-)
+load_dotenv()
+api_key = os.environ["apiKey"]
+domain = os.environ["domain"]
 
-print("dict comprehension\t", time_dict_comprehension)
-print("deepcopy\t\t", time_deepcopy)
+
+map_name = MN.linkoping
+
+prev = None
+for i in range(10):
+    print(i)
+    map_data = getMapData(map_name, api_key)
+
+    s = json.dumps(map_data)
+    if prev is not None:
+        assert s == prev
+    prev = s
+    time.sleep(5)
+
+
+print("Done")

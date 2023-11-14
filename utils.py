@@ -8,7 +8,7 @@ from starterkit.data_keys import (
 )
 
 
-def score_chunk(
+def score_all_3100(
     map_name,
     map_data,
     starting_solution,
@@ -17,15 +17,19 @@ def score_chunk(
     range_min,
     range_max,
 ):
-    # TODO remove assert once tested
-    assert starting_solution[LK.locations][location_name][LK.f3100Count] == 0
-
     best_solution = None
     best_score = -math.inf
 
     for i in range(range_min, range_max + 1):
         current_solution = copy_solution(starting_solution)
         current_solution[LK.locations][location_name][LK.f3100Count] = i
+
+        if (
+            current_solution[LK.locations][location_name][LK.f9100Count] == 0
+            and current_solution[LK.locations][location_name][LK.f3100Count] == 0
+        ):
+            del current_solution[LK.locations][location_name]
+
         current_score = score_wrapper(
             map_name, current_solution, map_data, general_data
         )
@@ -33,6 +37,47 @@ def score_chunk(
         if current_score > best_score:
             best_score = current_score
             best_solution = current_solution
+
+    return best_score, best_solution
+
+
+def score_location(
+    map_name,
+    map_data,
+    starting_solution,
+    location_name,
+    general_data,
+    range_min,
+    range_max,
+):
+    best_solution = None
+    best_score = -math.inf
+
+    for i in range(range_min, range_max + 1):
+        current_solution = copy_solution(starting_solution)
+
+        if location_name not in current_solution[LK.locations]:
+            current_solution[LK.locations][location_name] = {
+                LK.f9100Count: 0,
+                LK.f3100Count: 0,
+            }
+        current_solution[LK.locations][location_name][LK.f9100Count] = i
+
+        best_score_3100, best_solution_3100 = score_all_3100(
+            map_name,
+            map_data,
+            current_solution,
+            location_name,
+            general_data,
+            range_min,
+            range_max,
+        )
+
+        if best_score_3100 > best_score:
+            best_score = best_score_3100
+            best_solution = best_solution_3100
+        else:
+            break
 
     return best_score, best_solution
 
