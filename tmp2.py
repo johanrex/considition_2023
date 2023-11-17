@@ -1,19 +1,29 @@
-import os
-from database import Database
-import json
-import time
-import copy
-from starterkit.data_keys import (
-    LocationKeys as LK,
-)
-import timeit
+from starterkit.scoring import calculateScore, distanceBetweenPoint
+from starterkit.api import submit
 from starterkit.api import getGeneralData, getMapData
+from dotenv import load_dotenv
+import os
+import math
+import itertools
 from starterkit.data_keys import (
     MapNames as MN,
     LocationKeys as LK,
-    GeneralKeys as GK,
+    ScoringKeys as SK,
+    CoordinateKeys as CK,
 )
-from dotenv import load_dotenv
+
+
+def create_wrong_solution(location_names: list[str]):
+    solution = {LK.locations: {}}
+
+    for location_name in location_names:
+        solution[LK.locations][location_name] = {
+            LK.f9100Count: 0,
+            LK.f3100Count: 0,
+        }
+
+    return solution
+
 
 load_dotenv()
 api_key = os.environ["apiKey"]
@@ -21,17 +31,9 @@ domain = os.environ["domain"]
 
 
 map_name = MN.linkoping
+map_data = getMapData(map_name, api_key)
+location_names = list(map_data["locations"].keys())
 
-prev = None
-for i in range(10):
-    print(i)
-    map_data = getMapData(map_name, api_key)
+wrong_solution = create_wrong_solution(location_names)
 
-    s = json.dumps(map_data)
-    if prev is not None:
-        assert s == prev
-    prev = s
-    time.sleep(5)
-
-
-print("Done")
+submit(map_name, wrong_solution, api_key)

@@ -1,3 +1,4 @@
+import random
 import json
 import os
 import math
@@ -39,7 +40,10 @@ if True:
 
     map_data = getMapData(map_name, api_key)
 
-    location_names = map_data["locations"].keys()
+    location_names = list(map_data["locations"].keys())
+    print(len(location_names), "locations")
+
+    random.shuffle(location_names)
 
     best_solution = {LK.locations: {}}
     best_score = -math.inf
@@ -48,26 +52,9 @@ if True:
     # Find optimal solutions for each location
     # ########################################
     for location_name in location_names:
-        # ########################################
-        # TODO verify that score_solution works and then remove the old one.
-        # Perhaps profile nr of calls to calculateScore
-        # ########################################
-
-        score_x, solution_x = utils.score_location(
-            map_name,
-            map_data,
-            best_solution,
-            location_name,
-            general_data,
-            range_min,
-            range_max,
-        )
-
-        best_score, best_solution = utils.find_optimal_placement_for_location2(
+        best_score, best_solution = utils.find_optimal_placement_for_single_location(
             location_name, best_solution, map_data, general_data, range_min, range_max
         )
-
-        assert best_score == score_x
 
     print(f"Score for {map_name}: {best_score}. Optimized for individual locations.")
 
@@ -88,12 +75,14 @@ if True:
     # ########################################
     # Keeping only some small clusters due to performance
     # ########################################
-    cluster_limit = 3  # TODO optimize
+    location_cluster_max_size = 3  # TODO optimize
     location_clusters = [
-        cluster for cluster in location_clusters if len(cluster) <= cluster_limit
+        cluster
+        for cluster in location_clusters
+        if len(cluster) <= location_cluster_max_size
     ]
     print(
-        f"{len(location_clusters)} clusters will be considered. Limiting cluster size to {cluster_limit}."
+        f"{len(location_clusters)} clusters will be considered. Limiting cluster size to {location_cluster_max_size}."
     )
 
     # ########################################
@@ -105,6 +94,9 @@ if True:
 
     for cluster in location_clusters:
         # print(f"Brute forcing cluster: {cluster}")
+        cluster = list(cluster)
+        random.shuffle(cluster)
+
         best_score, best_solution = utils.brute_force_locations_cluster(
             map_name,
             map_data,
@@ -124,9 +116,10 @@ if True:
     # Do a second round of location specific optimization. Might find something new.
     # ########################################
     for location_name in location_names:
-        best_score, best_solution = utils.find_optimal_placement_for_location2(
+        best_score, best_solution = utils.find_optimal_placement_for_single_location(
             location_name, best_solution, map_data, general_data, range_min, range_max
         )
+
     print(
         f"Score for {map_name}: {best_score}. Second round of optimizing for individual locations."
     )

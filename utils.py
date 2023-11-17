@@ -7,6 +7,64 @@ from starterkit.data_keys import (
     CoordinateKeys as CK,
 )
 
+# increasingscore_3100
+# increasingscore_9100
+
+
+class PermutationManager:
+    __machine_permutations = (
+        (0, 0),
+        (0, 1),
+        (0, 2),
+        (1, 0),
+        (1, 1),
+        (1, 2),
+        (2, 0),
+        (2, 1),
+        (2, 2),
+    )
+
+    # switch to genetic algorithm for the large clusters?
+
+    # ta bort alla kombinationer med en summa > x
+    # ta bort alla kombinationer med en summa < x
+
+    # sort by score?
+
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # if increasing score, continue.
+    # if decreasing score, continue 3.
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+    # kanske alltid kolla 3 framåt.
+    # lookahead_count
+    # lower_decreased_count
+
+    @classmethod
+    def get_next_permutation(cls, current_permutation_idx):
+        if current_permutation_idx == len(cls.__machine_permutations) - 1:
+            return None, None
+        else:
+            next_permutation_idx = current_permutation_idx + 1
+            return (
+                next_permutation_idx,
+                cls.__machine_permutations[next_permutation_idx],
+            )
+
+    @classmethod
+    def should_continue(
+        cls, old_score, current_score, old_permutation_idx, current_permutation_idx
+    ):
+        if current_score > old_score:
+            return True
+        elif current_score == old_score:
+            if current_permutation_idx > old_permutation_idx:
+                return True
+            else:
+                return False
+        else:
+            return False
+
 
 def score_all_3100(
     map_name,
@@ -92,10 +150,11 @@ def brute_force_locations_cluster2(
     range_min,
     range_max,
 ):
-    # check all within checkpoint before deciding to continue or break
-    # make function that checks best score for all solutions within a checkpoint?
+    perm_idx
 
-    # start at 0 9100 and get best chunk, then increase to max
+    pm = PermutationManager()
+    for location_name in location_cluster:
+        p_id, p = pm.get_next_permutation(0)
 
     pass
 
@@ -120,12 +179,15 @@ def brute_force_locations_cluster(
     for tpl in iterable:
         current_solution = copy_solution(starting_solution)
         for i, location_name in enumerate(location_cluster):
-            current_solution[LK.locations][location_name] = {
-                LK.f9100Count: tpl[i],
-                LK.f3100Count: tpl[i + 1],
-            }
+            if tpl[i] == 0 and tpl[i + 1] == 0:
+                if location_name in current_solution[LK.locations]:
+                    del current_solution[LK.locations][location_name]
+            else:
+                current_solution[LK.locations][location_name] = {
+                    LK.f9100Count: tpl[i],
+                    LK.f3100Count: tpl[i + 1],
+                }
 
-        prune_blanks_inplace(current_solution)
         current_score = score_wrapper(
             map_name, current_solution, map_data, general_data
         )
@@ -151,15 +213,7 @@ def fill_missing_locations_inplace(solution, location_names):
             }
 
 
-def prune_blanks_inplace(solution):
-    solution[LK.locations] = {
-        k: v
-        for k, v in solution[LK.locations].items()
-        if v[LK.f9100Count] > 0 or v[LK.f3100Count] > 0
-    }
-
-
-def find_optimal_placement_for_location2(
+def find_optimal_placement_for_single_location(
     location_name,
     current_solution,
     map_data,
@@ -213,8 +267,6 @@ def create_simple_solution(location_names: list[str]):
             LK.f9100Count: 1,
             LK.f3100Count: 0,
         }
-
-    prune_blanks_inplace(solution)
 
     return solution
 
