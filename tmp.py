@@ -6,7 +6,7 @@ import os
 import math
 from dotenv import load_dotenv
 from database import Database
-from DistanceUtils import MapDistance
+from distanceutils import MapDistance
 from starterkit.api import getGeneralData, getMapData
 
 from starterkit.data_keys import (
@@ -36,7 +36,7 @@ algorithm = "custom1"
 # put gbg last
 map_names = sorted(map_names, reverse=True)
 # for map_name in map_names:
-map_name = MN.linkoping
+map_name = MN.uppsala
 if True:
     print("#############################################")
     print("Finding solution for:", map_name)
@@ -64,22 +64,11 @@ if True:
     print(f"Score for {map_name}: {best_score}. Optimized for individual locations.")
 
     # ########################################
-    # Find locations within 200 meters
-    # Try combinations within radius
+    # Find clusters of locations within radius
     # ########################################
-    location_clusters = set()
-    map_distance = MapDistance(map_data)
-    for location_name in location_names:
-        cluster = map_distance.locations_within_radius(location_name, radius)
-        if len(cluster) > 1:
-            # The cluster we get may be a duplicate. Using a set keeps it unique.
-            location_clusters.add(cluster)
-
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    # TODO merge clusters with common locations
-    # Treat them as one big cluster.
-    # location_clusters = merge_clusters(location_clusters)
-    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    location_clusters: list[frozenset[str]] = utils.get_location_clusters(
+        map_data, location_names, radius
+    )
 
     nr_of_clusters = len(location_clusters)
     nr_of_locations_in_all_clusters = len(
@@ -87,18 +76,19 @@ if True:
     )
 
     print(f"Finding clusters of locations within a radius of {radius} meters.")
-    print(f"{nr_of_clusters} clusters found.")
     print(f"{nr_of_locations_in_all_clusters} unique locations in clusters.")
     print(
         f"{round(100*nr_of_locations_in_all_clusters/len(location_names))}% of all locations are in clusters."
     )
 
-    counter = Counter([len(cluster) for cluster in location_clusters])
-    lst = []
-    for value, count in counter.most_common():
-        lst.append((value, count))
-    df = pd.DataFrame(lst, columns=["cluster_size", "count"])
-    print(df.to_string(index=False))
+    print(utils.get_clusters_summary(location_clusters))
+
+    # ########################################
+    # merge clusters with common locations
+    # ########################################
+    print("Merging clusters with common locations.")
+    location_clusters = utils.merge_clusters_with_common_locations(location_clusters)
+    print(utils.get_clusters_summary(location_clusters))
 
     # ########################################
     # Keeping only small clusters due to performance
@@ -115,7 +105,7 @@ if True:
     # Brute force combinations within radius
     # ########################################
 
-    # Start with the small clusters and work towards bigger
+    # Start with the smallest clusters and work towards bigger
     small_clusters = sorted(small_clusters, key=len)
 
     for i, cluster in enumerate(small_clusters):
@@ -123,7 +113,7 @@ if True:
             f"Brute forcing cluster {i+1}/{len(small_clusters)}. Cluster size: {len(cluster)}"
         )
         locations_in_cluster = list(cluster)
-        random.shuffle(locations_in_cluster)
+        # random.shuffle(locations_in_cluster)
 
         best_score, best_solution = utils.brute_force_locations_cluster(
             map_name,

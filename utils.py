@@ -1,3 +1,7 @@
+from collections import Counter
+
+import pandas as pd
+from distanceutils import MapDistance
 from starterkit.scoring import calculateScore
 import math
 import itertools
@@ -172,6 +176,44 @@ def score_location(
             break
 
     return best_score, best_solution
+
+
+def get_location_clusters(map_data, location_names, radius) -> list[frozenset[str]]:
+    """Get a list of location clusters within radius where cluster has radius"""
+    location_clusters_set = set()
+    map_distance = MapDistance(map_data)
+    for location_name in location_names:
+        cluster = map_distance.locations_within_radius(location_name, radius)
+        if len(cluster) > 1:
+            # The cluster we get may be a duplicate. Using a set keeps it unique.
+            location_clusters_set.add(cluster)
+
+    return list(location_clusters_set)
+
+
+def merge_clusters_with_common_locations(location_clusters: list[frozenset[str]]):
+    merged_clusters: list[frozenset] = []
+    q = list(location_clusters)
+    while len(q) > 0:
+        current_cluster = q.pop(0)
+        for other_cluster in q:
+            if len(current_cluster & other_cluster) > 0:
+                current_cluster |= other_cluster
+                q.remove(other_cluster)
+
+        merged_clusters.append(current_cluster)
+
+    return merged_clusters
+
+
+def get_clusters_summary(location_clusters) -> str:
+    counter = Counter([len(cluster) for cluster in location_clusters])
+    lst = [(value, count) for value, count in counter.most_common()]
+    df = pd.DataFrame(lst, columns=["cluster_size", "count"])
+    df = df.sort_values("cluster_size")
+    msg = "Total nr of clusters: " + str(len(location_clusters)) + "\n"
+    msg += df.to_string(index=False)
+    return msg
 
 
 def brute_force_locations_cluster(
