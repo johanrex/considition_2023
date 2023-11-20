@@ -1,5 +1,4 @@
 import math
-import uuid
 import functools
 from data_keys import (
     LocationKeys as LK,
@@ -164,7 +163,7 @@ def calculateScore(mapName, solution, mapEntity, generalData):
 
 
 @functools.cache
-def distanceBetweenPoint(lat_1, long_1, lat_2, long_2) -> int:
+def distanceBetweenPoint(lat_1, long_1, lat_2, long_2) -> float:
     R = 6371e3
     φ1 = lat_1 * math.pi / 180  # φ, λ in radians
     φ2 = lat_2 * math.pi / 180

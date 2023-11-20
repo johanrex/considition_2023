@@ -13,7 +13,7 @@ from starterkit.data_keys import (
 
 
 class PermutationManager:
-    __machine_permutations = (
+    machine_permutations = (
         (0, 0),
         (0, 1),
         (0, 2),
@@ -43,13 +43,13 @@ class PermutationManager:
 
     @classmethod
     def get_next_permutation(cls, current_permutation_idx):
-        if current_permutation_idx == len(cls.__machine_permutations) - 1:
+        if current_permutation_idx == len(cls.machine_permutations) - 1:
             return None, None
         else:
             next_permutation_idx = current_permutation_idx + 1
             return (
                 next_permutation_idx,
-                cls.__machine_permutations[next_permutation_idx],
+                cls.machine_permutations[next_permutation_idx],
             )
 
     @classmethod
@@ -65,6 +65,39 @@ class PermutationManager:
                 return False
         else:
             return False
+
+
+def brute_force_single_location(
+    map_name,
+    map_data,
+    starting_solution,
+    location_name,
+    general_data,
+):
+    best_score = -math.inf
+    best_solution = None
+
+    for f9100count, f3100count in PermutationManager.machine_permutations:
+        current_solution = copy_solution(starting_solution)
+
+        if f9100count == 0 and f3100count == 0:
+            if location_name in current_solution[LK.locations]:
+                del current_solution[LK.locations][location_name]
+        else:
+            current_solution[LK.locations][location_name] = {
+                LK.f9100Count: f9100count,
+                LK.f3100Count: f3100count,
+            }
+
+        current_score = score_wrapper(
+            map_name, current_solution, map_data, general_data
+        )
+
+        if current_score > best_score:
+            best_score = current_score
+            best_solution = current_solution
+
+    return best_score, best_solution
 
 
 def score_all_3100(
@@ -139,25 +172,6 @@ def score_location(
             break
 
     return best_score, best_solution
-
-
-def brute_force_locations_cluster2(
-    map_name,
-    map_data,
-    starting_score,
-    starting_solution,
-    location_cluster,
-    general_data,
-    range_min,
-    range_max,
-):
-    perm_idx
-
-    pm = PermutationManager()
-    for location_name in location_cluster:
-        p_id, p = pm.get_next_permutation(0)
-
-    pass
 
 
 def brute_force_locations_cluster(
@@ -261,7 +275,7 @@ def find_optimal_placement_for_single_location(
 
 
 def create_simple_solution(location_names: list[str]):
-    solution = {LK.locations: {}}
+    solution: dict = {LK.locations: {}}
 
     for location_name in location_names:
         solution[LK.locations][location_name] = {

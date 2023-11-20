@@ -35,7 +35,7 @@ algorithm = "custom1"
 # put gbg last
 map_names = sorted(map_names, reverse=True)
 # for map_name in map_names:
-map_name = MN.uppsala
+map_name = MN.linkoping
 if True:
     print("#############################################")
     print("Finding solution for:", map_name)
@@ -49,7 +49,7 @@ if True:
     random.shuffle(location_names)
     # location_names = utils.order_by_sales(location_names, map_data)
 
-    best_solution = {LK.locations: {}}
+    best_solution: dict = {LK.locations: {}}
     best_score = -math.inf
 
     # ########################################
@@ -73,6 +73,12 @@ if True:
         if len(cluster) > 1:
             # The cluster we get may be a duplicate. Using a set keeps it unique.
             location_clusters.add(cluster)
+
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    # TODO merge clusters with common locations
+    # Treat them as one big cluster.
+    # location_clusters = merge_clusters(location_clusters)
+    # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     nr_of_clusters = len(location_clusters)
     nr_of_locations_in_all_clusters = len(
@@ -115,15 +121,15 @@ if True:
         print(
             f"Brute forcing cluster {i+1}/{len(small_clusters)}. Cluster size: {len(cluster)}"
         )
-        cluster = list(cluster)
-        random.shuffle(cluster)
+        locations_in_cluster = list(cluster)
+        random.shuffle(locations_in_cluster)
 
         best_score, best_solution = utils.brute_force_locations_cluster(
             map_name,
             map_data,
             best_score,
             best_solution,
-            cluster,
+            locations_in_cluster,
             general_data,
             range_min,
             range_max,
