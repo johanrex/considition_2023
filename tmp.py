@@ -1,4 +1,6 @@
+from collections import Counter
 import random
+import pandas as pd
 import json
 import os
 import math
@@ -22,6 +24,7 @@ domain = os.environ["domain"]
 general_data = getGeneralData()
 map_names = general_data["trainingMapNames"]
 
+location_cluster_max_size = 5  # TODO optimize
 range_min = 0
 range_max = 2
 radius = general_data[GK.willingnessToTravelInMeters]  # 200.0
@@ -32,7 +35,7 @@ algorithm = "custom1"
 # put gbg last
 map_names = sorted(map_names, reverse=True)
 # for map_name in map_names:
-map_name = MN.linkoping
+map_name = MN.uppsala
 if True:
     print("#############################################")
     print("Finding solution for:", map_name)
@@ -44,6 +47,7 @@ if True:
     print(len(location_names), "locations")
 
     random.shuffle(location_names)
+    # location_names = utils.order_by_sales(location_names, map_data)
 
     best_solution = {LK.locations: {}}
     best_score = -math.inf
@@ -70,30 +74,47 @@ if True:
             # The cluster we get may be a duplicate. Using a set keeps it unique.
             location_clusters.add(cluster)
 
-    print(f"{len(location_clusters)} clusters found. Locations within {radius} meters.")
+    nr_of_clusters = len(location_clusters)
+    nr_of_locations_in_all_clusters = len(
+        {location for cluster in location_clusters for location in cluster}
+    )
+
+    print(f"Finding clusters of locations within a radius of {radius} meters.")
+    print(f"{nr_of_clusters} clusters found.")
+    print(f"{nr_of_locations_in_all_clusters} unique locations in clusters.")
+    print(
+        f"{round(100*nr_of_locations_in_all_clusters/len(location_names))}% of all locations are in clusters."
+    )
+
+    counter = Counter([len(cluster) for cluster in location_clusters])
+    lst = []
+    for value, count in counter.most_common():
+        lst.append((value, count))
+    df = pd.DataFrame(lst, columns=["cluster_size", "count"])
+    print(df.to_string(index=False))
 
     # ########################################
-    # Keeping only some small clusters due to performance
+    # Keeping only small clusters due to performance
     # ########################################
-    location_cluster_max_size = 3  # TODO optimize
-    location_clusters = [
+    small_clusters = [
         cluster
         for cluster in location_clusters
         if len(cluster) <= location_cluster_max_size
     ]
-    print(
-        f"{len(location_clusters)} clusters will be considered. Limiting cluster size to {location_cluster_max_size}."
-    )
+    print(f"Limiting cluster size to {location_cluster_max_size} locations.")
+    print(f"{len(small_clusters)}/{nr_of_clusters} clusters will be considered.")
 
     # ########################################
     # Brute force combinations within radius
     # ########################################
 
     # Start with the small clusters and work towards bigger
-    location_clusters = sorted(location_clusters, key=len)
+    small_clusters = sorted(small_clusters, key=len)
 
-    for cluster in location_clusters:
-        # print(f"Brute forcing cluster: {cluster}")
+    for i, cluster in enumerate(small_clusters):
+        print(
+            f"Brute forcing cluster {i+1}/{len(small_clusters)}. Cluster size: {len(cluster)}"
+        )
         cluster = list(cluster)
         random.shuffle(cluster)
 

@@ -5,6 +5,7 @@ from starterkit.data_keys import (
     LocationKeys as LK,
     ScoringKeys as SK,
     CoordinateKeys as CK,
+    GeneralKeys as GK,
 )
 
 # increasingscore_3100
@@ -269,6 +270,13 @@ def create_simple_solution(location_names: list[str]):
         }
 
     return solution
+
+
+def order_by_sales(locations, map_data):
+    sorted_locations = sorted(
+        locations, key=lambda x: map_data[LK.locations][x][GK.salesVol], reverse=True
+    )
+    return sorted_locations
 
 
 def score_wrapper(map_name, solution, map_data, general_data):
