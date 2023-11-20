@@ -6,6 +6,7 @@ import os
 import math
 from dotenv import load_dotenv
 from database import Database
+from DistanceUtils import MapDistance
 from starterkit.api import getGeneralData, getMapData
 
 from starterkit.data_keys import (
@@ -67,7 +68,7 @@ if True:
     # Try combinations within radius
     # ########################################
     location_clusters = set()
-    map_distance = utils.MapDistance(map_data)
+    map_distance = MapDistance(map_data)
     for location_name in location_names:
         cluster = map_distance.locations_within_radius(location_name, radius)
         if len(cluster) > 1:
