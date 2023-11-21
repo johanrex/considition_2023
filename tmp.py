@@ -217,16 +217,10 @@ if __name__ == "__main__":
 
 """
 TODO optimizations
-    var hostas api? Azure? Köra min lösning på Azure?
-    bättre brute force för location cluster. Kanske nån stack för att hålla reda på inre loopen. 
-    mypy?
-    cython?
-    mypyc?
     skriv om scoring function så den inte gör dict access?
     multithreading?
     parallellisera?
     skriv till db async?
-    c++ scoring?
 
 TODO competition day
     Reboot computer for fresh memory
@@ -237,13 +231,8 @@ TODO competition day
 """
 pass
 
-# bara kör en massa single location optimization med random start input och se var de diffar. Där finns något att brute forca.
-
 # parallellisera den genetiska modellen!!!!
 
 # Hur köra på vm i molnet?
 #   Fixa konto på ms.
 #   docker?
-
-
-# TODO read cached data from file and see if that solves the differences.
