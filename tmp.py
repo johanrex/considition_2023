@@ -30,7 +30,6 @@ def main(map_name):
     range_max = 2
     radius = general_data[GK.willingnessToTravelInMeters]  # 200.0
 
-    db = Database()
     algorithm = "custom1"
 
     if True:
@@ -53,6 +52,8 @@ def main(map_name):
         best_score, best_solution = utils.brute_force_single_locations_many_times(
             location_names, map_data, general_data, range_min, range_max
         )
+
+        utils.score_checkpoint(map_name, best_score, best_solution, algorithm)
 
         # TODO why the hell does score increase after second round of optimizing for individual locations?
 
@@ -143,6 +144,7 @@ def main(map_name):
             )
 
         print(f"Score for {map_name}: {best_score}. Optimized for small clusters.")
+        utils.score_checkpoint(map_name, best_score, best_solution, algorithm)
 
         # ########################################
         # Large clusters: genetic algorithm
@@ -192,12 +194,7 @@ def main(map_name):
         # ########################################
         # Add to database
         # ########################################
-        db.insert(
-            map_name,
-            best_score,
-            algorithm,
-            json.dumps(best_solution),
-        )
+        utils.score_checkpoint(map_name, best_score, best_solution, algorithm)
 
         print("Done.")
         print("")

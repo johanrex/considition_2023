@@ -1,6 +1,10 @@
+from database import Database
+import os
 import random
+import json
 from collections import Counter
-
+from multiprocessing import Pool
+from functools import partial
 import pandas as pd
 from distanceutils import MapDistance
 from starterkit.scoring import calculateScore
@@ -70,6 +74,15 @@ class PermutationManager:
                 return False
         else:
             return False
+
+
+def score_checkpoint(map_name, score, solution, algorithm):
+    Database().insert(
+        map_name,
+        score,
+        algorithm,
+        json.dumps(solution),
+    )
 
 
 def brute_force_single_location(
@@ -271,6 +284,15 @@ def fill_missing_locations_inplace(solution, location_names):
             }
 
 
+def brute_force_single_locations_many_times_worker(
+    i, location_names, map_data, general_data, range_min, range_max
+):
+    print(f"Running attempt {i+1} in process ID {os.getpid()}")
+    return brute_force_single_locations(
+        location_names, map_data, general_data, range_min, range_max
+    )
+
+
 def brute_force_single_locations_many_times(
     location_names, map_data, general_data, range_min, range_max, attempts=3
 ):
@@ -278,13 +300,19 @@ def brute_force_single_locations_many_times(
     best_solution: dict
     best_score = -math.inf
 
-    # attempts can be run in parallell.
-    for i in range(attempts):
-        print(f"Running attempt {i+1}/{attempts}")
-        attempt_best_score, attempt_best_solution = brute_force_single_locations(
-            location_names, map_data, general_data, range_min, range_max
+    # attempts can be run in parallel.
+    with Pool() as p:
+        partial_worker = partial(
+            brute_force_single_locations_many_times_worker,
+            location_names=location_names,
+            map_data=map_data,
+            general_data=general_data,
+            range_min=range_min,
+            range_max=range_max,
         )
+        results = p.map(partial_worker, range(attempts))
 
+    for attempt_best_score, attempt_best_solution in results:
         if attempt_best_score > best_score:
             best_score = attempt_best_score
             best_solution = attempt_best_solution
@@ -326,7 +354,7 @@ def brute_force_single_locations(
         if candidate_score > best_score:
             best_score = candidate_score
             best_solution = candidate_best_solution
-            print("New best score:", best_score)
+            print(f"New best score:{best_score}. Pid {os.getpid()}")
 
         prev_score = best_score
     return best_score, best_solution
