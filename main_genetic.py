@@ -1,6 +1,6 @@
 import os
 import sys
-
+from genetic_util import GeneticUtil
 import json
 from database import Database
 from starterkit.scoring import calculateScore
@@ -30,22 +30,6 @@ def write_response_to_file(file_name, reponse):
         f.write(s)
 
 
-def solution_from_int_list(individual: list[int], location_names: list[str]):
-    individual_idx = 0
-    solution = {LK.locations: {}}
-    for location_name in location_names:
-        if individual[individual_idx] == 0 and individual[individual_idx + 1] == 0:
-            individual_idx += 2
-        else:
-            solution[LK.locations][location_name] = {
-                LK.f9100Count: individual[individual_idx],
-                LK.f3100Count: individual[individual_idx + 1],
-            }
-            individual_idx += 2
-
-    return solution
-
-
 def int_list_from_solution(
     solution: dict[str, dict[str, int]], location_names: list[str]
 ):
@@ -70,7 +54,7 @@ def fitness_callback(genome: list[int]):
 
     map_name = map_data[SK.mapName]
 
-    solution = solution_from_int_list(genome, location_names)
+    solution = GeneticUtil.solution_from_int_list(genome, location_names)
     score_obj = calculateScore(map_name, solution, map_data, general_data)
     score_val = score_obj[SK.gameScore][SK.total]
 

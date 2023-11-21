@@ -1,8 +1,8 @@
 import random
 
 
-def fitness(genome):
-    return 0  # Placeholder fitness function
+def fitness(genome) -> float:
+    return 0.0  # Placeholder fitness function
 
 
 # TODO it's possible but unlikely to create a genome with only zeroes. It can not be scored. Perhaps handle this by assigning a max negative score?
@@ -60,4 +60,6 @@ def genetic_algorithm(
         population[-2:] = children
 
     # Return the best genome from the final population
-    return max(population, key=fitness)
+    tmp = sorted([(fitness(genome), genome) for genome in population], reverse=True)
+    best_score, best_genome = tmp[0]
+    return best_score, best_genome

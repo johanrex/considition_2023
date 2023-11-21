@@ -1,3 +1,4 @@
+import random
 from collections import Counter
 
 import pandas as pd
@@ -270,6 +271,83 @@ def fill_missing_locations_inplace(solution, location_names):
             }
 
 
+def brute_force_single_locations_many_times(
+    location_names, map_data, general_data, range_min, range_max, attempts=3
+):
+    print("Brute forcing initial solution on individual locations...")
+    best_solution: dict
+    best_score = -math.inf
+
+    # attempts can be run in parallell.
+    for i in range(attempts):
+        print(f"Running attempt {i+1}/{attempts}")
+        attempt_best_score, attempt_best_solution = brute_force_single_locations(
+            location_names, map_data, general_data, range_min, range_max
+        )
+
+        if attempt_best_score > best_score:
+            best_score = attempt_best_score
+            best_solution = attempt_best_solution
+            print("New best score:", best_score)
+
+    return best_score, best_solution
+
+
+def brute_force_single_locations(
+    location_names,
+    map_data,
+    general_data,
+    range_min,
+    range_max,
+):
+    prev_score = -math.inf
+    best_score = -math.inf
+    best_solution: dict = {LK.locations: {}}
+    improvement = True
+    while improvement:
+        random.shuffle(location_names)
+
+        (
+            candidate_score,
+            candidate_best_solution,
+        ) = brute_force_locations_by_single_location(
+            best_score,
+            best_solution,
+            location_names,
+            map_data,
+            general_data,
+            range_min,
+            range_max,
+        )
+
+        if prev_score == candidate_score:
+            improvement = False
+
+        if candidate_score > best_score:
+            best_score = candidate_score
+            best_solution = candidate_best_solution
+            print("New best score:", best_score)
+
+        prev_score = best_score
+    return best_score, best_solution
+
+
+def brute_force_locations_by_single_location(
+    best_score,
+    best_solution,
+    location_names,
+    map_data,
+    general_data,
+    range_min,
+    range_max,
+):
+    for location_name in location_names:
+        best_score, best_solution = find_optimal_placement_for_single_location(
+            location_name, best_solution, map_data, general_data, range_min, range_max
+        )
+    return best_score, best_solution
+
+
 def find_optimal_placement_for_single_location(
     location_name,
     current_solution,
@@ -328,9 +406,9 @@ def create_simple_solution(location_names: list[str]):
     return solution
 
 
-def order_by_sales(locations, map_data):
+def order_by_sales(locations, map_data, reverse=True):
     sorted_locations = sorted(
-        locations, key=lambda x: map_data[LK.locations][x][GK.salesVol], reverse=True
+        locations, key=lambda x: map_data[LK.locations][x][GK.salesVol], reverse=reverse
     )
     return sorted_locations
 

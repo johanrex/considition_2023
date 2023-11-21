@@ -1,5 +1,21 @@
 
 
+conda create -c conda-forge --name considition_2023_pypy pypy python=3.9
+conda activate considition_2023_pypy
+
+
+TODO
+    take map name from cmdline
+    logging with map_name + timestamp
+    insert to db at checkpoints. 
+    mypyc
+    divide map in smaller areas 
+    what can be done in parallell
+    
+    
+
+
+
 Restart from previous best. 
 
 Hosting
