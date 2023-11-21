@@ -19,7 +19,7 @@ from starterkit.data_keys import (
 import utils
 
 
-def main():
+def main(map_name):
     load_dotenv()
     api_key = os.environ["apiKey"]
 
@@ -33,8 +33,6 @@ def main():
     db = Database()
     algorithm = "custom1"
 
-    # for map_name in map_names:
-    map_name = MN.goteborg
     if True:
         print("#############################################")
         print("Finding solution for:", map_name)
@@ -208,7 +206,11 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    if len(sys.argv) > 1:
+        map_name = sys.argv[1]
+    else:
+        map_name = MN.goteborg
+    main(map_name)
 
 
 ###############################################################################
