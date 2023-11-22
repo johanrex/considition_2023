@@ -152,6 +152,7 @@ def main(map_name):
             if best_score > prev_score:
                 print(f"New best score: {best_score}")
                 prev_score = best_score
+                utils.score_checkpoint(map_name, best_score, best_solution, algorithm)
 
         print(f"Score for {map_name}: {best_score}. Optimized for small clusters.")
         utils.score_checkpoint(map_name, best_score, best_solution, algorithm)
