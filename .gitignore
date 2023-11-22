@@ -1,3 +1,6 @@
 .env
 my_games
 __pycache__
+
+/build/
+/*.pyd

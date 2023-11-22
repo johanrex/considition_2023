@@ -1,5 +1,6 @@
 import math
 import functools
+from typing import Any
 from data_keys import (
     LocationKeys as LK,
     CoordinateKeys as CK,
@@ -11,7 +12,9 @@ from data_keys import (
 )
 
 
-def calculateScore(mapName, solution, mapEntity, generalData):
+def calculateScore(
+    mapName: str, solution: dict, mapEntity: dict, generalData: dict
+) -> dict:
     scoredSolution = {
         # SK.gameId: str(uuid.uuid4()),
         SK.gameId: 0,
@@ -56,7 +59,7 @@ def calculateScore(mapName, solution, mapEntity, generalData):
                     + f9_count * generalData[GK.f9100Data][GK.leasingCostPerWeek],
                 }
 
-                if scoredSolution[LK.locations][key][LK.salesCapacity] <= 0:
+                if scoredSolution[LK.locations][key][LK.salesCapacity] <= float(0):
                     raise SystemExit(
                         f"You are not allowed to submit locations with no refill stations. Remove or alter location: {scoredSolution[LK.locations][key][LK.locationName]}"
                     )
@@ -163,7 +166,9 @@ def calculateScore(mapName, solution, mapEntity, generalData):
 
 
 @functools.cache
-def distanceBetweenPoint(lat_1, long_1, lat_2, long_2) -> float:
+def distanceBetweenPoint(
+    lat_1: float, long_1: float, lat_2: float, long_2: float
+) -> float:
     R = 6371e3
     φ1 = lat_1 * math.pi / 180  # φ, λ in radians
     φ2 = lat_2 * math.pi / 180
@@ -181,7 +186,7 @@ def distanceBetweenPoint(lat_1, long_1, lat_2, long_2) -> float:
     return round(d, 0)
 
 
-def distributeSales(with_, without, generalData):
+def distributeSales(with_: dict, without: dict, generalData: dict) -> dict[Any, Any]:
     for key_without in without:
         distributeSalesTo = {}
         loc_without = without[key_without]
@@ -196,7 +201,7 @@ def distributeSales(with_, without, generalData):
             if distance < generalData[GK.willingnessToTravelInMeters]:
                 distributeSalesTo[with_[key_with_][LK.locationName]] = distance
 
-        total = 0
+        total = float(0)
         if distributeSalesTo:
             for key_temp in distributeSalesTo:
                 distributeSalesTo[key_temp] = (
@@ -220,8 +225,8 @@ def distributeSales(with_, without, generalData):
     return with_
 
 
-def calcualteFootfall(locations, mapEntity):
-    maxFootfall = 0
+def calcualteFootfall(locations: dict, mapEntity: dict) -> dict:
+    maxFootfall = float(0)
     for keyLoc in locations:
         loc = locations[keyLoc]
         for hotspot in mapEntity[HK.hotspots]:
@@ -300,7 +305,7 @@ def initiateSandboxLocations(locations: list, generalData, solution):
     return locations
 
 
-def divideFootfall(locations, generalData):
+def divideFootfall(locations: dict, generalData: dict) -> dict:
     for key in locations:
         count = 1
 

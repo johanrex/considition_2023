@@ -13,7 +13,12 @@ import genetic
 
 class GeneticUtil:
     def __init__(
-        self, map_name, location_names, map_data, general_data, starting_solution
+        self,
+        map_name: str,
+        location_names: list[str],
+        map_data: dict,
+        general_data: dict,
+        starting_solution: dict,
     ) -> None:
         self.map_name = map_name
         self.map_data = map_data
@@ -82,18 +87,23 @@ class GeneticUtil:
 
         genome_length = len(self.location_names * 2)
 
-        # evolutions can be run in parallel.
-        with Pool() as p:
-            partial_worker = partial(
-                self.worker,
-                nr_of_generations=nr_of_generations,
-                population_size=population_size,
-                genome_length=genome_length,
-                range_min=range_min,
-                range_max=range_max,
-                fitness_callback=self._fitness_callback,
-            )
-            results = p.map(partial_worker, range(nr_of_evolutions))
+        try:
+            # evolutions can be run in parallel.
+            with Pool() as p:
+                partial_worker = partial(
+                    self.worker,
+                    nr_of_generations=nr_of_generations,
+                    population_size=population_size,
+                    genome_length=genome_length,
+                    range_min=range_min,
+                    range_max=range_max,
+                    fitness_callback=self._fitness_callback,
+                )
+                results = p.map(partial_worker, range(nr_of_evolutions))
+        except KeyboardInterrupt:
+            print("Caught KeyboardInterrupt, terminating workers")
+            p.terminate()
+            p.join()
 
         for best_score_single_evolution, best_genome_single_evolution in results:
             if best_score_single_evolution > best_score:

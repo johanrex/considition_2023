@@ -1,1 +1,1 @@
-snakeviz .\profiling_linkoping_x.prof
+snakeviz .\profiling_goteborg.prof

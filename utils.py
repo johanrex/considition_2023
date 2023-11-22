@@ -76,7 +76,10 @@ class PermutationManager:
             return False
 
 
-def score_checkpoint(map_name, score, solution, algorithm):
+def score_checkpoint(
+    map_name: str, score: float, solution: dict, algorithm: str
+) -> None:
+    print(f"Writing score {score} to database")
     Database().insert(
         map_name,
         score,
@@ -91,9 +94,9 @@ def brute_force_single_location(
     starting_solution,
     location_name,
     general_data,
-):
+) -> tuple[float, dict]:
     best_score = -math.inf
-    best_solution = None
+    best_solution = {}
 
     for f9100count, f3100count in PermutationManager.machine_permutations:
         current_solution = copy_solution(starting_solution)
@@ -126,8 +129,8 @@ def score_all_3100(
     general_data,
     range_min,
     range_max,
-):
-    best_solution = None
+) -> tuple[float, dict]:
+    best_solution = {}
     best_score = -math.inf
 
     for i in range(range_min, range_max + 1):
@@ -159,8 +162,8 @@ def score_location(
     general_data,
     range_min,
     range_max,
-):
-    best_solution = None
+) -> tuple[float, dict]:
+    best_solution = {}
     best_score = -math.inf
 
     for i in range(range_min, range_max + 1):
@@ -192,7 +195,9 @@ def score_location(
     return best_score, best_solution
 
 
-def get_location_clusters(map_data, location_names, radius) -> list[frozenset[str]]:
+def get_location_clusters(
+    map_data: dict, location_names: list[str], radius: float
+) -> list[frozenset[str]]:
     """Get a list of location clusters within radius where cluster has radius"""
     location_clusters_set = set()
     map_distance = MapDistance(map_data)
@@ -205,7 +210,9 @@ def get_location_clusters(map_data, location_names, radius) -> list[frozenset[st
     return list(location_clusters_set)
 
 
-def merge_clusters_with_common_locations(location_clusters: list[frozenset[str]]):
+def merge_clusters_with_common_locations(
+    location_clusters: list[frozenset[str]],
+) -> list[frozenset]:
     merged_clusters: list[frozenset] = []
     q = list(location_clusters)
     while len(q) > 0:
@@ -239,7 +246,7 @@ def brute_force_locations_cluster(
     general_data,
     range_min,
     range_max,
-):
+) -> tuple[float, dict]:
     best_solution = starting_solution
     best_score = starting_score
 
@@ -269,13 +276,13 @@ def brute_force_locations_cluster(
     return best_score, best_solution
 
 
-def copy_solution(solution):
+def copy_solution(solution: dict) -> dict:
     new_solution = {LK.locations: {}}
     new_solution[LK.locations] = {k: v for k, v in solution[LK.locations].items()}
     return new_solution
 
 
-def fill_missing_locations_inplace(solution, location_names):
+def fill_missing_locations_inplace(solution: dict, location_names: list[str]) -> None:
     for location_name in location_names:
         if location_name not in solution[LK.locations]:
             solution[LK.locations][location_name] = {
@@ -285,8 +292,13 @@ def fill_missing_locations_inplace(solution, location_names):
 
 
 def brute_force_single_locations_many_times_worker(
-    i, location_names, map_data, general_data, range_min, range_max
-):
+    i: int,
+    location_names: list[str],
+    map_data: dict,
+    general_data: dict,
+    range_min: int,
+    range_max: int,
+) -> tuple[float, dict]:
     print(f"Running attempt {i+1} in process ID {os.getpid()}")
     return brute_force_single_locations(
         location_names, map_data, general_data, range_min, range_max
@@ -295,22 +307,27 @@ def brute_force_single_locations_many_times_worker(
 
 def brute_force_single_locations_many_times(
     location_names, map_data, general_data, range_min, range_max, attempts=3
-):
+) -> tuple[float, dict]:
     print("Brute forcing initial solution on individual locations...")
     best_solution: dict
     best_score = -math.inf
 
-    # attempts can be run in parallel.
-    with Pool() as p:
-        partial_worker = partial(
-            brute_force_single_locations_many_times_worker,
-            location_names=location_names,
-            map_data=map_data,
-            general_data=general_data,
-            range_min=range_min,
-            range_max=range_max,
-        )
-        results = p.map(partial_worker, range(attempts))
+    try:
+        # attempts can be run in parallel.
+        with Pool() as p:
+            partial_worker = partial(
+                brute_force_single_locations_many_times_worker,
+                location_names=location_names,
+                map_data=map_data,
+                general_data=general_data,
+                range_min=range_min,
+                range_max=range_max,
+            )
+            results = p.map(partial_worker, range(attempts))
+    except KeyboardInterrupt:
+        print("Caught KeyboardInterrupt, terminating workers")
+        p.terminate()
+        p.join()
 
     for attempt_best_score, attempt_best_solution in results:
         if attempt_best_score > best_score:
@@ -327,7 +344,7 @@ def brute_force_single_locations(
     general_data,
     range_min,
     range_max,
-):
+) -> tuple[float, dict]:
     prev_score = -math.inf
     best_score = -math.inf
     best_solution: dict = {LK.locations: {}}
@@ -361,14 +378,14 @@ def brute_force_single_locations(
 
 
 def brute_force_locations_by_single_location(
-    best_score,
-    best_solution,
-    location_names,
-    map_data,
-    general_data,
-    range_min,
-    range_max,
-):
+    best_score: float,
+    best_solution: dict,
+    location_names: list[str],
+    map_data: dict,
+    general_data: dict,
+    range_min: int,
+    range_max: int,
+) -> tuple[float, dict]:
     for location_name in location_names:
         best_score, best_solution = find_optimal_placement_for_single_location(
             location_name, best_solution, map_data, general_data, range_min, range_max
@@ -377,13 +394,13 @@ def brute_force_locations_by_single_location(
 
 
 def find_optimal_placement_for_single_location(
-    location_name,
-    current_solution,
-    map_data,
-    general_data,
-    range_min,
-    range_max,
-):
+    location_name: str,
+    current_solution: dict,
+    map_data: dict,
+    general_data: dict,
+    range_min: int,
+    range_max: int,
+) -> tuple[float, dict]:
     map_name = map_data[SK.mapName]
 
     best_solution_outer = None
@@ -422,7 +439,23 @@ def find_optimal_placement_for_single_location(
     return best_score_outer, best_solution_outer
 
 
-def create_simple_solution(location_names: list[str]):
+def create_random_solution(location_names: list[str]) -> dict:
+    solution: dict = {LK.locations: {}}
+    arr = [0, 1, 2]
+
+    for location_name in location_names:
+        rnd1 = random.choice(arr)
+        rnd2 = random.choice(arr)
+        if rnd1 != 0 or rnd2 != 0:
+            solution[LK.locations][location_name] = {
+                LK.f9100Count: rnd1,
+                LK.f3100Count: rnd2,
+            }
+
+    return solution
+
+
+def create_simple_solution(location_names: list[str]) -> dict:
     solution: dict = {LK.locations: {}}
 
     for location_name in location_names:
@@ -434,14 +467,16 @@ def create_simple_solution(location_names: list[str]):
     return solution
 
 
-def order_by_sales(locations, map_data, reverse=True):
+def order_by_sales(locations: list[str], map_data: dict, reverse=True) -> list[str]:
     sorted_locations = sorted(
         locations, key=lambda x: map_data[LK.locations][x][GK.salesVol], reverse=reverse
     )
     return sorted_locations
 
 
-def score_wrapper(map_name, solution, map_data, general_data):
+def score_wrapper(
+    map_name: str, solution: dict, map_data: dict, general_data: dict
+) -> float:
     if len(solution[LK.locations]) == 0:
         return -math.inf
     else:

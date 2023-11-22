@@ -47,6 +47,6 @@ class MapDistance:
             {
                 location_b
                 for location_b, distance in self.distance_matrix[location].items()
-                if distance <= radius
+                if distance < radius
             }
         )
