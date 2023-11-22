@@ -95,11 +95,16 @@ def main(map_name):
         # ########################################
         # merge clusters with common locations
         # ########################################
-        print("Merging clusters with common locations.")
-        location_clusters = utils.merge_clusters_with_common_locations(
-            location_clusters
-        )
-        print(utils.get_clusters_summary(location_clusters))
+
+        merge = False
+        if merge:
+            print("Merging clusters with common locations.")
+            location_clusters = utils.merge_clusters_with_common_locations(
+                location_clusters
+            )
+            print(utils.get_clusters_summary(location_clusters))
+        else:
+            print("NOT merging clusters with common locations.")
 
         # ########################################
         # Keeping only small clusters due to performance
@@ -121,6 +126,7 @@ def main(map_name):
 
         f"{len(small_clusters)} small clusters. Using brute force."
 
+        prev_score = best_score
         # Start with the smallest clusters and work towards bigger
         small_clusters = sorted(small_clusters, key=len)
         for i, cluster in enumerate(small_clusters):
@@ -143,6 +149,10 @@ def main(map_name):
                 range_max,
             )
 
+            if best_score > prev_score:
+                print(f"New best score: {best_score}")
+                prev_score = best_score
+
         print(f"Score for {map_name}: {best_score}. Optimized for small clusters.")
         utils.score_checkpoint(map_name, best_score, best_solution, algorithm)
 
@@ -152,7 +162,7 @@ def main(map_name):
 
         nr_of_evolutions = 3
         nr_of_generations = 1000
-        population_size = 10
+        population_size = 8  # TODO what should population size be?? 10
 
         print(f"{len(large_clusters)} large clusters. Using genetic algorithm.")
         for i, cluster in enumerate(large_clusters):

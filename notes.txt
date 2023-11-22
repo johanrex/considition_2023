@@ -5,13 +5,13 @@ conda activate considition_2023_pypy
 
 
 TODO
-    take map name from cmdline
+    jämför cpu performance i laptop och stationär
+    kanske dela upp mapen i geografiska regioner
     logging with map_name + timestamp
-    insert to db at checkpoints. 
     mypyc
     divide map in smaller areas 
     what can be done in parallell
-    
+
     
 
 

@@ -1,3 +1,6 @@
+from multiprocessing import Pool
+from functools import partial
+
 from starterkit.data_keys import (
     MapNames as MN,
     LocationKeys as LK,
@@ -35,13 +38,34 @@ class GeneticUtil:
 
         return solution
 
-    def __fitness_callback(self, genome: list[int]):
+    def _fitness_callback(self, genome: list[int]):
         solution = self.solution_from_int_list(genome)
         current_score = utils.score_wrapper(
             self.map_name, solution, self.map_data, self.general_data
         )
 
         return current_score
+
+    def worker(
+        self,
+        i,
+        nr_of_generations,
+        population_size,
+        genome_length,
+        range_min,
+        range_max,
+        fitness_callback,
+    ):
+        print(f"Running evolution {i+1}")
+        return genetic.genetic_algorithm(
+            population_size=population_size,
+            num_generations=nr_of_generations,
+            genome_length=genome_length,
+            range_min=range_min,
+            range_max=range_max,
+            start_genome=None,
+            fitness_callback=fitness_callback,
+        )
 
     def run_evolution(
         self,
@@ -58,22 +82,20 @@ class GeneticUtil:
 
         genome_length = len(self.location_names * 2)
 
-        for i in range(nr_of_evolutions):
-            print(f"Running evolution {i+1}/{nr_of_evolutions}")
-
-            (
-                best_score_single_evolution,
-                best_genome_single_evolution,
-            ) = genetic.genetic_algorithm(
+        # evolutions can be run in parallel.
+        with Pool() as p:
+            partial_worker = partial(
+                self.worker,
+                nr_of_generations=nr_of_generations,
                 population_size=population_size,
-                num_generations=nr_of_generations,
                 genome_length=genome_length,
                 range_min=range_min,
                 range_max=range_max,
-                start_genome=None,
-                fitness_callback=self.__fitness_callback,
+                fitness_callback=self._fitness_callback,
             )
+            results = p.map(partial_worker, range(nr_of_evolutions))
 
+        for best_score_single_evolution, best_genome_single_evolution in results:
             if best_score_single_evolution > best_score:
                 print(
                     f"Genetic alg found new best score: {best_score_single_evolution}."
