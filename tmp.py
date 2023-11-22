@@ -25,7 +25,7 @@ def main(map_name):
 
     general_data = getGeneralData()
 
-    cluster_max_size = 4  # TODO 4 is reasonable but slow
+    cluster_max_size = 3  # TODO 4 might be too slow
     range_min = 0
     range_max = 2
     radius = general_data[GK.willingnessToTravelInMeters]  # 200.0
