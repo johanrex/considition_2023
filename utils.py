@@ -372,6 +372,9 @@ def brute_force_single_locations(
             best_score = candidate_score
             best_solution = candidate_best_solution
             print(f"New best score:{best_score}. Pid {os.getpid()}")
+            score_checkpoint(
+                map_data["mapName"], best_score, best_solution, "custom1"
+            )  # hack to get anything at all from the big cities.
 
         prev_score = best_score
     return best_score, best_solution
