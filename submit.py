@@ -24,7 +24,7 @@ domain = os.environ["domain"]
 db = Database()
 
 general_data = getGeneralData()
-map_names = general_data["trainingMapNames"]
+map_names = general_data["competitionMapNames"]
 
 logger.info("---------------------------------")
 logger.info("Current best solutions:")

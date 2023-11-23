@@ -121,36 +121,6 @@ def main(map_name: str) -> None:
         print(f"{len(small_clusters)}/{nr_of_clusters} clusters will be considered.")
 
         # ########################################
-        # Large clusters: genetic algorithm
-        # ########################################
-
-        nr_of_evolutions = 3
-        nr_of_generations = 1000
-        population_size = 8  # TODO what should population size be?? 10
-
-        large_clusters = sorted(large_clusters, key=len)
-
-        print(f"{len(large_clusters)} large clusters. Using genetic algorithm.")
-        for i, cluster in enumerate(large_clusters):
-            print(
-                f"Genetic. Cluster size: {len(cluster)}. {i+1}/{len(large_clusters)}."
-            )
-            locations_in_cluster = list(cluster)
-
-            ga = genetic_util.GeneticUtil(
-                map_name, locations_in_cluster, map_data, general_data, best_solution
-            )
-            best_score, best_solution = ga.run_evolution(
-                nr_of_evolutions,
-                nr_of_generations,
-                population_size,
-                best_score,
-                best_solution,
-                range_min,
-                range_max,
-            )
-
-        # ########################################
         # Small clusters: brute force
         # ########################################
 
@@ -186,6 +156,36 @@ def main(map_name: str) -> None:
 
         print(f"Score for {map_name}: {best_score}. Optimized for small clusters.")
         utils.score_checkpoint(map_name, best_score, best_solution, algorithm)
+
+        # ########################################
+        # Large clusters: genetic algorithm
+        # ########################################
+
+        nr_of_evolutions = 3
+        nr_of_generations = 1000
+        population_size = 8  # TODO what should population size be?? 10
+
+        large_clusters = sorted(large_clusters, key=len)
+
+        print(f"{len(large_clusters)} large clusters. Using genetic algorithm.")
+        for i, cluster in enumerate(large_clusters):
+            print(
+                f"Genetic. Cluster size: {len(cluster)}. {i+1}/{len(large_clusters)}."
+            )
+            locations_in_cluster = list(cluster)
+
+            ga = genetic_util.GeneticUtil(
+                map_name, locations_in_cluster, map_data, general_data, best_solution
+            )
+            best_score, best_solution = ga.run_evolution(
+                nr_of_evolutions,
+                nr_of_generations,
+                population_size,
+                best_score,
+                best_solution,
+                range_min,
+                range_max,
+            )
 
         # ########################################
         # Do a second round of location specific optimization. Might find something new.
